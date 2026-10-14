@@ -22,6 +22,10 @@ COPY scripts ./scripts
 COPY Makefile README.md ./
 RUN uv sync --frozen
 
+# O ambiente já está pronto e é somente leitura para o usuário não-root: `uv run` dentro do
+# contêiner não deve tentar re-sincronizar o projeto (escreveria em /opt/venv e falharia).
+ENV UV_NO_SYNC=1
+
 RUN useradd -m app && mkdir -p data results && chown -R app:app /app
 USER app
 
