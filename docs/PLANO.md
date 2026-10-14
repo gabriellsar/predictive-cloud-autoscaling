@@ -20,13 +20,13 @@ os artefatos pedidos e espere aprovação do Gabriel.
 
 ## Fase 0 — Ambiente (`docs/specs/00-ambiente.md`)
 
-- [ ] `uv` instalado, projeto criado com layout `src/` e Python 3.12
-- [ ] dependências por grupos (`default`, `dev`, `nn` declarado e **não instalado**)
-- [ ] `uv.lock` gerado e versionado
-- [ ] `Makefile` com os alvos da spec
-- [ ] `Dockerfile` e `docker-compose.yml` com `uv sync --frozen`
-- [ ] `configs/v0.toml` com os parâmetros iniciais
-- [ ] teste de fumaça: `uv run pytest` e `docker compose run --rm app make test` passam
+- [x] `uv` instalado, projeto criado com layout `src/` e Python 3.12
+- [x] dependências por grupos (`default`, `dev`, `nn` declarado e **não instalado**)
+- [x] `uv.lock` gerado e versionado
+- [x] `Makefile` com os alvos da spec
+- [x] `Dockerfile` e `docker-compose.yml` com `uv sync --frozen`
+- [x] `configs/v0.toml` com os parâmetros iniciais
+- [x] teste de fumaça: `uv run pytest` e `docker compose run --rm app make test` passam
 
 **G0:** o Gabriel roda `make setup && make test` e `docker compose run --rm app make test`
 na própria máquina.
