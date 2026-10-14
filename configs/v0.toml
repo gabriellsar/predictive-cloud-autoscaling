@@ -1,0 +1,23 @@
+seed = 42
+
+[data]
+source = "alibaba2018"        # alibaba2018 | rossi_saved
+interval_seconds = 300
+split = { train = 0.6, val = 0.2, test = 0.2 }
+
+[forecast]
+horizons = [1, 2, 3, 6]       # horizontes avaliados nas métricas de previsão
+ma_window = 6
+season_period = 288           # 1 dia em intervalos de 5 min
+arima_order = [2, 1, 2]
+
+[sim]
+n_peak = 50                   # instâncias necessárias no pico do treino (define k)
+cost_per_instance = 1.0
+lead_time = 1                 # L, em intervalos
+n_min = 1
+margins = [0.0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
+hpa_targets = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
+hpa_tolerance = 0.1
+hpa_scale_down_window = 6     # intervalos
+epsilons = [0.01, 0.05]       # SLO de violação para os pontos de operação

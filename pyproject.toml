@@ -1,0 +1,37 @@
+[project]
+name = "tcc"
+version = "0.1.0"
+description = "Alocação preditiva de recursos em nuvem via previsão de carga (Projeto Final)"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "duckdb",
+    "scipy",
+    "statsmodels",
+    "matplotlib",
+]
+
+[dependency-groups]
+dev = ["pytest", "ruff", "ipykernel"]
+# Semana seguinte (rede neural). NÃO instalar agora. Quando entrar, usar o índice CPU do
+# PyTorch via [[tool.uv.index]] explícito + [tool.uv.sources] (confirmar sintaxe na doc do uv):
+# nn = ["torch"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tcc"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
