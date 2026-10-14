@@ -97,8 +97,8 @@ Criar `tests/test_smoke.py` que importa `tcc`, lê `configs/v0.toml` e confere a
 
 ## Critérios de aceite (G0)
 
-- [ ] `make setup && make lint && make test` passa em máquina limpa
-- [ ] `docker compose build` e `docker compose run --rm app make test` passam
-- [ ] `uv.lock` e `.python-version` versionados
-- [ ] `torch` não está instalado
-- [ ] `docs/DIARIO.md` iniciado, com as decisões de ambiente
+- [x] `make setup && make lint && make test` passa em máquina limpa
+- [x] `docker compose build` e `docker compose run --rm app make test` passam
+- [x] `uv.lock` e `.python-version` versionados
+- [x] `torch` não está instalado
+- [x] `docs/DIARIO.md` iniciado, com as decisões de ambiente
