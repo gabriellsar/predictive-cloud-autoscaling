@@ -14,3 +14,9 @@ def test_config_keys():
         assert key in cfg["sim"]
     for key in ("horizons", "ma_window", "season_period", "arima_order"):
         assert key in cfg["forecast"]
+
+
+def test_config_independe_do_diretorio(tmp_path, monkeypatch):
+    """A configuração deve carregar de qualquer diretório de trabalho (local e no Docker)."""
+    monkeypatch.chdir(tmp_path)
+    assert load_config()["seed"] == 42
