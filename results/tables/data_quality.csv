@@ -1,35 +1,39 @@
 metric,value,description
 source,alibaba2018,fonte dos dados
+min_coverage,0.9,cobertura mínima para o intervalo valer
+trim_leading_missing,True,descarta o trecho inicial sem demanda válida
+first_bucket_start,160500,"início da série, em segundos"
 n_rows_raw,246934820,linhas lidas do CSV bruto
 n_machines,4023,máquinas distintas no rastro (N da definição de demanda)
-n_intervals,2304,intervalos de 300 s na série final
+n_intervals,1769,intervalos de 300 s na série final
 interval_seconds,300,duração de um intervalo (Δ)
-duration_days,8.0,duração total coberta
+duration_days,6.142,duração total coberta
 sampling_seconds_median,10.0,"intervalo original de amostragem, estimado pela mediana de amostras por bucket"
 samples_per_bucket_p05_p95,29-30,"amostras por (máquina, bucket): p05 a p95, mostra a amostragem irregular"
 n_cpu_dropped,6,"amostras de CPU nulas ou fora de [0, 100] ignoradas na média"
 frac_cpu_dropped,2.4297909869495117e-08,fração das linhas com CPU descartada
 n_mem_dropped,0,"amostras de memória nulas ou fora de [0, 100] ignoradas na média"
 frac_buckets_coverage_below_1,1.0,fração de intervalos em que não todas as N máquinas reportaram
-coverage_min,0.0,cobertura mínima entre os intervalos
-coverage_median,0.9975142928163062,cobertura mediana entre os intervalos
-n_buckets_no_data,61,intervalos sem nenhuma amostra
+coverage_min,0.9778772060651255,cobertura mínima entre os intervalos
+coverage_median,0.9977628635346756,cobertura mediana entre os intervalos
+n_buckets_no_data,0,intervalos sem nenhuma amostra
 n_buckets_filled,0,intervalos preenchidos por interpolação
-n_gaps_above_max_fill,1,lacunas contíguas maiores que max_fill_gap = 3 (ficaram NaN)
-gaps_above_max_fill_detail,t=473 (61 intervalos),posição e tamanho das lacunas não preenchidas
-n_nan_demand_cpu,61,NaN restantes em demand_cpu
+n_gaps_above_max_fill,0,lacunas contíguas maiores que max_fill_gap = 3 (ficaram NaN)
+gaps_above_max_fill_detail,nenhuma,posição e tamanho das lacunas não preenchidas
+n_nan_demand_cpu,0,NaN restantes em demand_cpu
 n_machines_starting_at_bucket_0,2348,máquinas cujo primeiro bucket é 0 (origem comum dos time_stamp)
 machine_first_bucket_min_median_max,0/0/2067,primeiro bucket por máquina: mín./mediana/máx.
 machine_last_bucket_min_median_max,190/2303/2303,último bucket por máquina: mín./mediana/máx.
-median_buckets_per_machine,2092.0,mediana de buckets com dado por máquina (de n_intervals possíveis)
-split_sizes,1382/460/462,tamanho de treino/validação/teste (divisão cronológica)
-demand_cpu_min,670.472,mínimo de demand_cpu (máquinas equivalentes)
-demand_cpu_mean,1528.456,média de demand_cpu (máquinas equivalentes)
-demand_cpu_median,1486.912,mediana de demand_cpu (máquinas equivalentes)
-demand_cpu_p95,2197.262,p95 de demand_cpu (máquinas equivalentes)
+n_buckets_trace,2304,"buckets do rastro completo, antes de qualquer corte"
+median_buckets_per_machine,2092.0,"mediana de buckets com dado por máquina, no rastro completo"
+split_sizes,1061/353/355,tamanho de treino/validação/teste (divisão cronológica)
+demand_cpu_min,839.795,mínimo de demand_cpu (máquinas equivalentes)
+demand_cpu_mean,1551.759,média de demand_cpu (máquinas equivalentes)
+demand_cpu_median,1521.762,mediana de demand_cpu (máquinas equivalentes)
+demand_cpu_p95,2208.684,p95 de demand_cpu (máquinas equivalentes)
 demand_cpu_max,3156.257,máximo de demand_cpu (máquinas equivalentes)
 demand_mem_min,3126.22,mínimo de demand_mem (máquinas equivalentes)
-demand_mem_mean,3540.56,média de demand_mem (máquinas equivalentes)
-demand_mem_median,3550.45,mediana de demand_mem (máquinas equivalentes)
-demand_mem_p95,3690.827,p95 de demand_mem (máquinas equivalentes)
+demand_mem_mean,3566.153,média de demand_mem (máquinas equivalentes)
+demand_mem_median,3572.283,mediana de demand_mem (máquinas equivalentes)
+demand_mem_p95,3700.132,p95 de demand_mem (máquinas equivalentes)
 demand_mem_max,3794.69,máximo de demand_mem (máquinas equivalentes)

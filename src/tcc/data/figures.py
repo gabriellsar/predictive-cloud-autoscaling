@@ -88,9 +88,13 @@ def plot_series_day(series: pd.DataFrame, interval: int, out: Path, day: int = 2
     fig, ax = plt.subplots(figsize=(9, 3.6))
     ax.plot(hours, window["demand_cpu"], lw=1.2, color="#1f77b4", label="CPU")
     ax.plot(hours, window["demand_mem"], lw=1.2, color="#9467bd", ls="--", label="memória")
-    ax.set_xlabel(f"hora dentro do dia {day} do rastro")
+    absolute_day = float(window["bucket_start"].iloc[0]) / 86400.0
+    ax.set_xlabel(f"hora dentro do dia {day} da série")
     ax.set_ylabel("demanda $d_t$ (máquinas equivalentes)")
-    ax.set_title(f"Variação intradiária da demanda (dia {day}, intervalos de 5 min)", fontsize=11)
+    ax.set_title(
+        f"Variação intradiária da demanda (dia {day} da série, t ≈ {absolute_day:.2f} d do rastro)",
+        fontsize=11,
+    )
     ax.set_xticks(range(0, 25, 3))
     ax.legend(fontsize=9)
     ax.margins(x=0.01)

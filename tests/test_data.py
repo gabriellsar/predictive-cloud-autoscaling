@@ -51,6 +51,10 @@ def synthetic_cfg(tmp_path: Path) -> dict[str, Any]:
         "raw_path": str(raw),
         "interim_dir": str(tmp_path / "interim"),
         "processed_dir": str(tmp_path / "processed"),
+        # Estes testes cobrem a definição base de demanda: as duas regras opcionais têm
+        # testes próprios e não devem variar conforme o que estiver em configs/v0.toml.
+        "min_coverage": 0.0,
+        "trim_leading_missing": False,
     }
     return cfg
 
