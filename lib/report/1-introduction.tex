@@ -1,0 +1,54 @@
+\chapter{Introdução}
+\label{cap:introducao}
+
+\section{Motivação}
+\label{sec:motivacao}
+
+A computação em nuvem consolidou-se como a principal forma de disponibilizar infraestrutura computacional para empresas e instituições. Nesse modelo, o provedor mantém grandes centros de dados e precisa decidir, de forma contínua, quanto de processamento, memória e armazenamento deve estar disponível para atender à demanda de seus clientes. Como a demanda tende a crescer, impulsionada sobretudo por aplicações de Inteligência Artificial e de análise de grandes volumes de dados, a gestão eficiente desses recursos tornou-se um fator central para a sustentabilidade econômica dos provedores \cite{rossi2023forecasting}.
+
+A dificuldade está no fato de que a carga de trabalho não é constante. Ela apresenta picos, padrões periódicos e variações aparentemente aleatórias. Diante disso, a abordagem mais comum é a alocação reativa, na qual o sistema ajusta os recursos apenas depois de observar uma mudança na demanda, normalmente por meio de regras de limiar sobre a utilização. Como a reação ocorre com atraso, esse tipo de estratégia tende a degradar o desempenho durante os picos e a desperdiçar recursos nos períodos de baixa utilização \cite{bodra2025ml}.
+
+Esse cenário cria um dilema permanente. Manter recursos em excesso (superprovisionamento) garante a qualidade do serviço, mas eleva o custo operacional. Manter recursos de menos (subprovisionamento) reduz o custo, mas provoca violações dos Acordos de Nível de Serviço (\textit{Service Level Agreements}, SLA) firmados com os clientes. Uma alternativa é a alocação preditiva, que utiliza o histórico de uso para antecipar a demanda futura e provisionar recursos antes que eles sejam necessários \cite{bodra2025ml}. Nesse contexto, prever a carga com precisão passa a ser uma pré-condição para otimizar a alocação \cite{rossi2023forecasting}.
+
+A previsão de carga em nuvem foi tradicionalmente tratada com modelos estatísticos lineares, como o ARIMA \cite{calheiros2015arima}. Mais recentemente, redes neurais profundas, em especial as arquiteturas recorrentes, passaram a ser aplicadas ao problema com bons resultados, inclusive em abordagens multivariadas que consideram simultaneamente o uso de processador e de memória \cite{xu2022esdnn}.
+
+\section{Definição do problema}
+\label{sec:definicao-problema}
+
+O problema tratado neste trabalho tem duas partes encadeadas. A primeira é um problema de previsão: dado o histórico de utilização de recursos de um \textit{cluster}, amostrado em intervalos regulares, estimar a demanda de processador e de memória em um horizonte curto. A segunda é um problema de decisão: a partir dessa estimativa, determinar quantas instâncias de recursos (máquinas virtuais ou contêineres) devem permanecer ativas em cada intervalo.
+
+De forma preliminar, a decisão pode ser formulada como a minimização do custo operacional sujeita a uma restrição de qualidade de serviço:
+
+\begin{equation}
+\label{eq:problema}
+\min_{n_1, \dots, n_T} \; \sum_{t=1}^{T} c \cdot n_t
+\quad \text{sujeito a} \quad
+\frac{1}{T} \sum_{t=1}^{T} \mathbf{1}\left[\, d_t > k \cdot n_t \,\right] \leq \varepsilon,
+\end{equation}
+
+\noindent em que $n_t$ é o número de instâncias ativas no intervalo $t$, $c$ é o custo de uma instância por intervalo, $k$ é a capacidade de uma instância, $d_t$ é a demanda real observada, $\mathbf{1}[\cdot]$ é a função indicadora e $\varepsilon$ é a fração máxima de intervalos com violação de SLA tolerada. Como $d_t$ não é conhecida no momento da decisão, a escolha de $n_t$ depende da previsão $\hat{d}_t$, e a qualidade dessa previsão afeta diretamente o custo e o número de violações. Essa formulação será refinada no Capítulo~\ref{cap:objetivos}.
+
+\section{Justificativa}
+\label{sec:justificativa}
+
+A relevância do problema é econômica e operacional. Cada ponto percentual de recursos ociosos representa custo para o provedor, e cada violação de SLA representa perda de qualidade percebida pelo cliente e, eventualmente, penalidades contratuais.
+
+Apesar do volume de trabalhos sobre previsão de carga, a maior parte deles avalia os modelos apenas por métricas de erro pontual, como RMSE e MAPE. \citeonline{rossi2023forecasting} mostram que essas métricas, isoladamente, não oferecem uma visão clara da utilidade dos modelos para a gestão de recursos, e apontam que integrar os modelos de previsão aos mecanismos de alocação em um mesmo fluxo ainda é uma questão em aberto. O esDNN \cite{xu2022esdnn} chega a aplicar suas previsões em uma simulação de escalonamento automático de máquinas, mas compara o resultado apenas com uma estratégia baseada na média das observações anteriores, sem confrontá-lo com outros métodos de previsão sob a mesma política de alocação.
+
+Do lado da alocação, a revisão de \citeonline{bodra2025ml} observa que a literatura carece de comparações quantitativas sistemáticas entre abordagens e que técnicas de aprendizado por reforço profundo, embora promissoras, são sensíveis ao projeto da função de recompensa e aos hiperparâmetros, o que dificulta sua adoção confiável. Isso favorece abordagens em que a previsão e a decisão sejam componentes separados, mais fáceis de interpretar e de avaliar.
+
+Dessa forma, há espaço para um trabalho que avalie de ponta a ponta o efeito da previsão sobre a alocação, medindo custo e violações de SLA, e que compare redes neurais e métodos tradicionais sob as mesmas condições, utilizando dados públicos de \textit{clusters} reais.
+
+\section{Escopo e delimitação}
+\label{sec:escopo}
+
+Para que o trabalho seja viável no tempo disponível, o escopo é delimitado da seguinte forma.
+
+\textbf{Incluído no escopo.} O trabalho utilizará rastros públicos de utilização de \textit{clusters}, especificamente o Alibaba Cluster Trace \cite{alibaba2018trace} e o Google Cluster Trace \cite{wilkes2020google}, agregados em séries temporais de uso de processador e de memória. Serão considerados horizontes de previsão curtos, compatíveis com decisões de alocação na escala de minutos. A alocação será avaliada em um centro de dados simulado, com um modelo de custo simplificado baseado no custo por instância ativa e uma métrica de violação de SLA baseada na demanda não atendida. A abordagem proposta, baseada em rede neural, será comparada com uma política reativa por limiar e com métodos tradicionais de previsão.
+
+\textbf{Fora do escopo.} Não fazem parte deste trabalho a implantação em uma infraestrutura de nuvem real, o posicionamento detalhado de máquinas virtuais em servidores físicos e a migração entre eles, a otimização de consumo de energia, cenários com múltiplos provedores e o uso de aprendizado por reforço para a tomada de decisão.
+
+\section{Organização do documento}
+\label{sec:organizacao}
+
+O restante deste documento está organizado da seguinte forma. O Capítulo~\ref{cap:situacao-atual} apresenta a terminologia básica e as principais abordagens existentes para previsão de carga e alocação de recursos em nuvem, com suas limitações, além das tecnologias que serão utilizadas. O Capítulo~\ref{cap:objetivos} descreve a solução proposta, seus objetivos específicos e o que será efetivamente implementado. O Capítulo~\ref{cap:plano-acao} revisa o plano de ação, comparando as atividades propostas com as realizadas. Por fim, o Capítulo~\ref{cap:cronogramas} apresenta os cronogramas do Projeto Final I e do Projeto Final II.
