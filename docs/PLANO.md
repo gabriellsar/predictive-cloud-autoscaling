@@ -33,12 +33,12 @@ na própria máquina.
 
 ## Fase 1 — Dados (`docs/specs/01-dados.md`)
 
-- [ ] obter o `machine_usage` do rastro Alibaba 2018 (ou acionar o *fallback*, ver riscos)
-- [ ] confirmar o esquema real contra o arquivo e a documentação
-- [ ] agregar em intervalos de 5 min com DuckDB e salvar em Parquet
-- [ ] relatório de qualidade (lacunas, máquinas ausentes, estatísticas)
-- [ ] funções `load_series()` e `split_series()` com testes
-- [ ] figuras: série completa, um dia ampliado, autocorrelação
+- [x] obter o `machine_usage` do rastro Alibaba 2018 (ou acionar o *fallback*, ver riscos)
+- [x] confirmar o esquema real contra o arquivo e a documentação
+- [x] agregar em intervalos de 5 min com DuckDB e salvar em Parquet
+- [x] relatório de qualidade (lacunas, máquinas ausentes, estatísticas)
+- [x] funções `load_series()` e `split_series()` com testes
+- [x] figuras: série completa, um dia ampliado, autocorrelação
 
 **G1:** o Gabriel olha as figuras e o relatório de qualidade e aprova a definição de demanda.
 

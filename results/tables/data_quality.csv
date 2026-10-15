@@ -1,0 +1,35 @@
+metric,value,description
+source,alibaba2018,fonte dos dados
+n_rows_raw,246934820,linhas lidas do CSV bruto
+n_machines,4023,máquinas distintas no rastro (N da definição de demanda)
+n_intervals,2304,intervalos de 300 s na série final
+interval_seconds,300,duração de um intervalo (Δ)
+duration_days,8.0,duração total coberta
+sampling_seconds_median,10.0,"intervalo original de amostragem, estimado pela mediana de amostras por bucket"
+samples_per_bucket_p05_p95,29-30,"amostras por (máquina, bucket): p05 a p95, mostra a amostragem irregular"
+n_cpu_dropped,6,"amostras de CPU nulas ou fora de [0, 100] ignoradas na média"
+frac_cpu_dropped,2.4297909869495117e-08,fração das linhas com CPU descartada
+n_mem_dropped,0,"amostras de memória nulas ou fora de [0, 100] ignoradas na média"
+frac_buckets_coverage_below_1,1.0,fração de intervalos em que não todas as N máquinas reportaram
+coverage_min,0.0,cobertura mínima entre os intervalos
+coverage_median,0.9975142928163062,cobertura mediana entre os intervalos
+n_buckets_no_data,61,intervalos sem nenhuma amostra
+n_buckets_filled,0,intervalos preenchidos por interpolação
+n_gaps_above_max_fill,1,lacunas contíguas maiores que max_fill_gap = 3 (ficaram NaN)
+gaps_above_max_fill_detail,t=473 (61 intervalos),posição e tamanho das lacunas não preenchidas
+n_nan_demand_cpu,61,NaN restantes em demand_cpu
+n_machines_starting_at_bucket_0,2348,máquinas cujo primeiro bucket é 0 (origem comum dos time_stamp)
+machine_first_bucket_min_median_max,0/0/2067,primeiro bucket por máquina: mín./mediana/máx.
+machine_last_bucket_min_median_max,190/2303/2303,último bucket por máquina: mín./mediana/máx.
+median_buckets_per_machine,2092.0,mediana de buckets com dado por máquina (de n_intervals possíveis)
+split_sizes,1382/460/462,tamanho de treino/validação/teste (divisão cronológica)
+demand_cpu_min,670.472,mínimo de demand_cpu (máquinas equivalentes)
+demand_cpu_mean,1528.456,média de demand_cpu (máquinas equivalentes)
+demand_cpu_median,1486.912,mediana de demand_cpu (máquinas equivalentes)
+demand_cpu_p95,2197.262,p95 de demand_cpu (máquinas equivalentes)
+demand_cpu_max,3156.257,máximo de demand_cpu (máquinas equivalentes)
+demand_mem_min,3126.22,mínimo de demand_mem (máquinas equivalentes)
+demand_mem_mean,3540.56,média de demand_mem (máquinas equivalentes)
+demand_mem_median,3550.45,mediana de demand_mem (máquinas equivalentes)
+demand_mem_p95,3690.827,p95 de demand_mem (máquinas equivalentes)
+demand_mem_max,3794.69,máximo de demand_mem (máquinas equivalentes)
