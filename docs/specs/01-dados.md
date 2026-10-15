@@ -10,14 +10,27 @@ memória, a cada 5 minutos, com divisão cronológica e um relatório de qualida
 `cluster-trace-v2018`). Cobre cerca de 4.000 máquinas em 8 dias. Interessa a tabela
 `machine_usage` (uso de recursos por máquina).
 
-Atenção a duas incertezas que precisam ser **confirmadas pelo agente**, não assumidas:
+**Fatos já confirmados (14/10/2026): o Gabriel baixou e perfilou o arquivo. Não rebaixe.**
 
-1. **Como obter os arquivos.** Os links de download do rastro podem exigir o preenchimento de um
-   formulário. Se for o caso, **pare e avise o Gabriel**. Não tente contornar.
-2. **Esquema real.** As colunas esperadas do `machine_usage` são provavelmente `machine_id`,
-   `time_stamp`, `cpu_util_percent`, `mem_util_percent` e outras de rede e disco. Confirme
-   no `trace_2018.md` do repositório e no cabeçalho real do arquivo. Verifique também se o arquivo
-   tem linha de cabeçalho, o intervalo original de amostragem e a unidade de `time_stamp`.
+- Arquivo: `data/raw/machine_usage.csv` (9,0 GB), **sem linha de cabeçalho**, 9 colunas, nesta ordem:
+  `machine_id` (texto, ex.: `m_1932`), `time_stamp` (inteiro, segundos desde o início do rastro),
+  `cpu_util_percent`, `mem_util_percent`, `mem_gps`, `mkpi`, `net_in`, `net_out`, `disk_io_percent`.
+  Ler com `read_csv(header=false, columns={...})` e tipos explícitos. `mem_gps` e `mkpi` vêm vazias
+  e devem ser `DOUBLE` com nulos (não são usadas).
+- Perfil: 246.934.800 linhas; 4.023 máquinas; `time_stamp` de 0 a 691.119 s (≈ 8,0 dias);
+  `cpu_util_percent` em [0, 100], média ≈ 38,2, com apenas 6 valores nulos; `mem_util_percent` sem
+  nulos nem valores fora de [0, 100]. Use `N = 4023` na definição de demanda.
+- Amostragem **irregular, de ~10 a 30 s** por máquina. O arquivo é **ordenado por máquina, não por
+  tempo**. Por isso toda agregação é feita em SQL com `GROUP BY` do *bucket*, nunca assumindo ordem.
+- 691.200 s / 300 s = **2.304 *buckets***. Com 60/20/20, ≈ 1.382 / 461 / 461. O treino cobre ≈ 4,8
+  ciclos de 288, o que atende ao mínimo de 2 ciclos do Holt-Winters.
+- Ignorar as linhas com CPU nula e descartar valores fora de [0, 100] por segurança, contando
+  quantos foram descartados no relatório de qualidade.
+
+Ainda a confirmar pelo agente:
+
+1. A cobertura real por *bucket* (fração das 4.023 máquinas que reportam) e se há *buckets* sem dados.
+2. Se os `time_stamp` de todas as máquinas compartilham a mesma origem (esperado, dado o perfil).
 
 **Plano B (fallback)** — dados pré-processados do repositório
 `https://github.com/andreareds/TowardsUncertaintyAwareWorkloadPrediction`, pasta `saved_data/`
@@ -60,9 +73,9 @@ momentos de saturação a demanda observada pode **subestimar** a demanda real (
 ## 4. API em `src/tcc/data/`
 
 ```python
-def build_series(raw_path, out_path, cfg) -> None: ...  # agrega e grava o Parquet
-def load_series(cfg) -> pd.DataFrame: ...  # índice 0..T-1, colunas padronizadas
-def split_series(df, cfg) -> dict[str, slice]: ...  # {"train", "val", "test"} por posição
+def build_series(raw_path, out_path, cfg) -> None: ...      # agrega e grava o Parquet
+def load_series(cfg) -> pd.DataFrame: ...                    # índice 0..T-1, colunas padronizadas
+def split_series(df, cfg) -> dict[str, slice]: ...           # {"train", "val", "test"} por posição
 ```
 
 `split_series` usa as frações de `configs/v0.toml` e retorna **fatias por posição**, em ordem
@@ -95,8 +108,8 @@ Rótulos e títulos em português, eixos com unidade.
 
 ## Critérios de aceite (G1)
 
-- [ ] Parquet gerado e `load_series()` funcionando
-- [ ] relatório de qualidade e as 4 figuras geradas
-- [ ] testes passando
-- [ ] diário registra: origem dos dados, esquema real, problemas e limitações (demanda censurada)
+- [x] Parquet gerado e `load_series()` funcionando
+- [x] relatório de qualidade e as 4 figuras geradas
+- [x] testes passando
+- [x] diário registra: origem dos dados, esquema real, problemas e limitações (demanda censurada)
 - [ ] o Gabriel aprovou a definição de demanda ao olhar as figuras
