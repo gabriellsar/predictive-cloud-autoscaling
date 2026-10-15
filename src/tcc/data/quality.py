@@ -16,6 +16,19 @@ from tcc.data.paths import connect, interim_path, resolve
 from tcc.data.series import load_series, split_series
 
 
+def _pt(value: Any) -> str:
+    """Formata um número no padrão português: milhar com ponto, decimal com vírgula."""
+    if isinstance(value, bool):
+        return "sim" if value else "não"
+    if isinstance(value, (int,)) or (hasattr(value, "is_integer") and float(value).is_integer()):
+        text = f"{int(value):,}"
+    elif isinstance(value, float):
+        text = f"{value:,.4f}".rstrip("0").rstrip(".")
+    else:
+        return str(value)
+    return text.replace(",", "\x00").replace(".", ",").replace("\x00", ".")
+
+
 def _gap_runs(no_data: pd.Series) -> list[tuple[int, int]]:
     """Sequências contíguas de *buckets* sem dado, como (início, comprimento)."""
     runs: list[tuple[int, int]] = []
@@ -69,7 +82,8 @@ def collect_metrics(cfg: dict[str, Any]) -> pd.DataFrame:
                 max(last_bucket) AS max_last_bucket,
                 median(last_bucket) AS median_last_bucket,
                 count(*) FILTER (WHERE first_bucket = 0) AS n_starting_at_zero,
-                median(n_buckets) AS median_buckets_per_machine
+                median(n_buckets) AS median_buckets_per_machine,
+                max(last_bucket) + 1 AS n_buckets_trace
             FROM (
                 SELECT machine_id,
                        min(bucket) AS first_bucket,
@@ -96,6 +110,13 @@ def collect_metrics(cfg: dict[str, Any]) -> pd.DataFrame:
 
     rows: list[tuple[str, Any, str]] = [
         ("source", data["source"], "fonte dos dados"),
+        ("min_coverage", data["min_coverage"], "cobertura mínima para o intervalo valer"),
+        (
+            "trim_leading_missing",
+            data["trim_leading_missing"],
+            "descarta o trecho inicial sem demanda válida",
+        ),
+        ("first_bucket_start", int(series["bucket_start"].iloc[0]), "início da série, em segundos"),
         ("n_rows_raw", n_rows, "linhas lidas do CSV bruto"),
         ("n_machines", n_machines, "máquinas distintas no rastro (N da definição de demanda)"),
         ("n_intervals", t, f"intervalos de {interval} s na série final"),
@@ -174,9 +195,14 @@ def collect_metrics(cfg: dict[str, Any]) -> pd.DataFrame:
             "último bucket por máquina: mín./mediana/máx.",
         ),
         (
+            "n_buckets_trace",
+            int(per_machine["n_buckets_trace"]),
+            "buckets do rastro completo, antes de qualquer corte",
+        ),
+        (
             "median_buckets_per_machine",
             float(per_machine["median_buckets_per_machine"]),
-            "mediana de buckets com dado por máquina (de n_intervals possíveis)",
+            "mediana de buckets com dado por máquina, no rastro completo",
         ),
         (
             "split_sizes",
@@ -219,38 +245,50 @@ def write_quality_report(cfg: dict[str, Any]) -> Path:
         "",
         "## Resumo",
         "",
-        f"- {value('n_rows_raw'):,} linhas brutas, {value('n_machines'):,} máquinas distintas "
-        f"(**N = {value('n_machines')}** na definição de demanda).",
-        f"- {value('n_intervals'):,} intervalos, cobrindo {value('duration_days')} dias.",
-        f"- Amostragem original estimada em ~{value('sampling_seconds_median')} s por máquina "
+        f"- {_pt(value('n_rows_raw'))} linhas brutas, {_pt(value('n_machines'))} máquinas "
+        f"distintas (**N = {value('n_machines')}** na definição de demanda).",
+        f"- {_pt(value('n_intervals'))} intervalos, cobrindo "
+        f"{_pt(value('duration_days'))} dias, a partir de "
+        f"t = {_pt(value('first_bucket_start'))} s do rastro.",
+        f"- Amostragem original estimada em ~{_pt(value('sampling_seconds_median'))} s por máquina "
         f"(amostras por intervalo, p05–p95: {value('samples_per_bucket_p05_p95')}), "
         "confirmando que a amostragem é irregular.",
         f"- Divisão cronológica treino/validação/teste: {value('split_sizes')} intervalos.",
         "",
         "## Cobertura e lacunas",
         "",
-        f"- Cobertura mediana: {float(value('coverage_median')):.4f}; "
-        f"mínima: {float(value('coverage_min')):.4f}.",
+        f"- Cobertura mediana: {_pt(round(float(value('coverage_median')), 4))}; "
+        f"mínima: {_pt(round(float(value('coverage_min')), 4))}.",
         f"- Intervalos com cobertura < 100%: "
-        f"{float(value('frac_buckets_coverage_below_1')):.4f} do total.",
-        f"- Intervalos sem nenhuma amostra: {value('n_buckets_no_data')}; "
-        f"preenchidos por interpolação: {value('n_buckets_filled')}.",
+        f"{_pt(round(float(value('frac_buckets_coverage_below_1')) * int(value('n_intervals'))))}"
+        f" de {_pt(value('n_intervals'))}.",
+        f"- Regra em vigor: `min_coverage = {value('min_coverage')}` (intervalos com cobertura "
+        f"abaixo disso viram lacuna), `trim_leading_missing = "
+        f"{str(value('trim_leading_missing')).lower()}` e `max_fill_gap = "
+        f"{cfg['data']['max_fill_gap']}`.",
+        f"- Intervalos sem nenhuma amostra: {_pt(value('n_buckets_no_data'))}; "
+        f"preenchidos por interpolação: {_pt(value('n_buckets_filled'))}.",
         f"- Lacunas maiores que `max_fill_gap`: {value('n_gaps_above_max_fill')} "
         f"({value('gaps_above_max_fill_detail')}).",
+        "",
+        "As estatísticas por máquina abaixo são do **rastro completo** "
+        f"({_pt(value('n_buckets_trace'))} intervalos), antes do corte:",
+        "",
         f"- Mediana de intervalos com dado por máquina: "
-        f"{value('median_buckets_per_machine')} de {value('n_intervals')}.",
-        f"- Máquinas cujo primeiro intervalo é 0: {value('n_machines_starting_at_bucket_0')} "
-        f"de {value('n_machines')}; primeiro intervalo por máquina (mín./mediana/máx.): "
+        f"{_pt(value('median_buckets_per_machine'))} de {_pt(value('n_buckets_trace'))}.",
+        f"- Máquinas cujo primeiro intervalo é 0: "
+        f"{_pt(value('n_machines_starting_at_bucket_0'))} de {_pt(value('n_machines'))}; "
+        f"primeiro intervalo por máquina (mín./mediana/máx.): "
         f"{value('machine_first_bucket_min_median_max')}; último: "
-        f"{value('machine_last_bucket_min_median_max')}. Isso responde se os `time_stamp` "
-        "compartilham a mesma origem.",
+        f"{value('machine_last_bucket_min_median_max')}. Os `time_stamp` compartilham a mesma "
+        "origem; o que varia é o tempo de vida de cada máquina no rastro.",
         f"- `NaN` restantes em `demand_cpu`: {value('n_nan_demand_cpu')}.",
         "",
         "## Amostras descartadas",
         "",
-        f"- CPU nula ou fora de [0, 100]: {value('n_cpu_dropped')} amostras "
+        f"- CPU nula ou fora de [0, 100]: {_pt(value('n_cpu_dropped'))} amostras "
         f"({float(value('frac_cpu_dropped')):.2e} das linhas).",
-        f"- Memória nula ou fora de [0, 100]: {value('n_mem_dropped')} amostras.",
+        f"- Memória nula ou fora de [0, 100]: {_pt(value('n_mem_dropped'))} amostras.",
         "",
         "## Demanda (em máquinas equivalentes totalmente utilizadas)",
         "",
@@ -259,8 +297,9 @@ def write_quality_report(cfg: dict[str, Any]) -> Path:
     ]
     for col in ("demand_cpu", "demand_mem"):
         lines.append(
-            f"| `{col}` | {value(f'{col}_min')} | {value(f'{col}_mean')} | "
-            f"{value(f'{col}_median')} | {value(f'{col}_p95')} | {value(f'{col}_max')} |"
+            f"| `{col}` | {_pt(value(f'{col}_min'))} | {_pt(value(f'{col}_mean'))} | "
+            f"{_pt(value(f'{col}_median'))} | {_pt(value(f'{col}_p95'))} | "
+            f"{_pt(value(f'{col}_max'))} |"
         )
     lines += [
         "",
@@ -268,8 +307,8 @@ def write_quality_report(cfg: dict[str, Any]) -> Path:
         "",
         "- **Demanda censurada:** a utilização por máquina tem teto de 100%, então em momentos",
         "  de saturação a demanda observada subestima a demanda real.",
-        "- A série cobre ~8 dias, o que deixa o conjunto de teste pequeno (limitação aceita",
-        "  no v0).",
+        f"- A série cobre {_pt(value('duration_days'))} dias, o que deixa o conjunto de teste",
+        "  pequeno (limitação aceita no v0).",
         "",
         "Tabela completa em `results/tables/data_quality.csv`.",
         "",
