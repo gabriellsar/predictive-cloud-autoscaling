@@ -11,6 +11,7 @@ __pycache__/
 .ipynb_checkpoints/
 .env
 *.parquet
-# CSV só é versionado em results/tables/
 *.csv
 !results/tables/*.csv
+CLAUDE.md
+docs/**
