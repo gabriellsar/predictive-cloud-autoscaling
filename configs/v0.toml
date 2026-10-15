@@ -4,6 +4,14 @@ seed = 42
 source = "alibaba2018"        # alibaba2018 | rossi_saved
 interval_seconds = 300
 split = { train = 0.6, val = 0.2, test = 0.2 }
+raw_path = "data/raw/machine_usage.csv"
+interim_dir = "data/interim"
+processed_dir = "data/processed"
+max_fill_gap = 3              # lacunas maiores que isso não são interpoladas
+min_coverage = 0.0            # buckets com cobertura abaixo disso viram lacuna (0 = aceita tudo)
+trim_leading_missing = false  # descarta o trecho inicial sem demanda válida
+duckdb_memory_limit = "12GB"
+duckdb_threads = 8
 
 [forecast]
 horizons = [1, 2, 3, 6]       # horizontes avaliados nas métricas de previsão
