@@ -23,6 +23,7 @@ arima_order = [2, 1, 2]
 n_peak = 50                   # instâncias necessárias no pico do treino (define k)
 cost_per_instance = 1.0
 lead_time = 1                 # L, em intervalos
+sensitivity_lead_times = [2]  # L extras, só para a figura de sensibilidade
 n_min = 1
 margins = [0.0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
 hpa_targets = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
