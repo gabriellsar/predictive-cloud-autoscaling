@@ -47,7 +47,12 @@ def main(argv: list[str] | None = None) -> None:
     table.round(6).to_csv(tables / "allocation_metrics.csv", index=False)
 
     points = operating_points(table, epsilons, main_lead)
-    points.to_csv(tables / "operating_points.csv", index=False)
+    # A agregação paralela do DuckDB soma em ordem variável, e a série refeita do zero difere
+    # em alguns ulps (~1e-15 relativo). Arredondar em 6 casas, como na tabela de alocação,
+    # torna o arquivo idêntico entre execuções. A coluna mistura números e "n/a".
+    points.map(lambda v: round(v, 6) if isinstance(v, float) else v).to_csv(
+        tables / "operating_points.csv", index=False
+    )
 
     plot_pareto(table, main_lead, epsilons, figures / "pareto_cost_violation.png")
     for lead_time in lead_times[1:]:
