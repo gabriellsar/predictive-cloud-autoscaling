@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib.util
+
 import numpy as np
 import pytest
 
@@ -17,6 +19,21 @@ from tcc.forecast.metrics import all_metrics
 
 SEASON = 12
 N = 200
+HAS_TORCH = importlib.util.find_spec("torch") is not None
+#: GRU pequena, só para os testes de contrato rodarem em poucos segundos.
+SMALL_GRU = dict(
+    window=24,
+    max_horizon=3,
+    hidden_size=8,
+    num_layers=1,
+    epochs=3,
+    batch_size=16,
+    learning_rate=0.01,
+    val_fraction=0.2,
+    patience=2,
+    seed=42,
+    num_threads=1,
+)
 
 
 def synthetic_series(seed: int = 42) -> np.ndarray:
@@ -27,13 +44,19 @@ def synthetic_series(seed: int = 42) -> np.ndarray:
 
 
 def all_forecasters() -> list[Forecaster]:
-    return [
+    forecasters: list[Forecaster] = [
         NaiveForecaster(),
         MovingAverageForecaster(window=6),
         SeasonalNaiveForecaster(season_period=SEASON),
         HoltWintersForecaster(season_period=SEASON),
         ArimaForecaster(order=(2, 1, 2)),
     ]
+    # a GRU entra nos mesmos testes de contrato quando o grupo `nn` está instalado
+    if HAS_TORCH:
+        from tcc.forecast.nn import GRUForecaster
+
+        forecasters.append(GRUForecaster(**SMALL_GRU))
+    return forecasters
 
 
 def forecaster_ids() -> list[str]:
@@ -190,7 +213,8 @@ def test_mape_mascara_valores_proximos_de_zero() -> None:
 
 
 def test_interface_nao_depende_de_statsmodels() -> None:
-    """Critério de aceite: a rede neural deve implementar a interface sem `statsmodels`.
+    """Critério de aceite: a rede neural deve implementar a interface sem `statsmodels`, e a
+    interface não pode depender do `torch` (spec 05).
 
     Roda em um processo separado porque, neste aqui, `statsmodels` já foi importado.
     """
@@ -201,6 +225,7 @@ def test_interface_nao_depende_de_statsmodels() -> None:
         "import sys;"
         "import tcc.forecast, tcc.forecast.base, tcc.forecast.baselines, tcc.forecast.metrics;"
         "assert 'statsmodels' not in sys.modules, sorted(m for m in sys.modules if 'stats' in m);"
+        "assert 'torch' not in sys.modules;"
         "tcc.forecast.NaiveForecaster()"
     )
     subprocess.run([sys.executable, "-c", code], check=True)
@@ -245,3 +270,34 @@ def test_cache_nao_olha_para_o_futuro_nem_confunde_historicos() -> None:
     altered = y.copy()
     altered[100] += 50.0
     assert cached.forecast(altered[:131], 2) != cached.forecast(y[:131], 2)
+
+
+# --------------------------------------------------------------------------------------
+# Registro dos previsores a partir da configuração
+# --------------------------------------------------------------------------------------
+
+
+def test_sem_torch_a_gru_e_omitida_com_aviso(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Sem o grupo `nn`, os clássicos seguem e a GRU sai com um aviso (spec 05, 4.4)."""
+    import importlib.util as util
+
+    from tcc.config import load_config
+    from tcc.forecast import evaluate
+
+    real_find_spec = util.find_spec
+    monkeypatch.setattr(
+        util, "find_spec", lambda name, *a: None if name == "torch" else real_find_spec(name, *a)
+    )
+    with pytest.warns(UserWarning, match="GRU foi omitida"):
+        names = [f.name for f in evaluate.build_forecasters(load_config())]
+    assert names == ["naive", "moving_average", "seasonal_naive", "holt_winters", "arima"]
+
+
+def test_max_horizon_menor_que_o_necessario_e_erro_de_configuracao() -> None:
+    from tcc.config import load_config
+    from tcc.forecast.evaluate import build_forecasters
+
+    cfg = load_config()
+    cfg["forecast"]["nn"]["max_horizon"] = 3  # forecast.horizons vai até 6
+    with pytest.raises(ValueError, match="max_horizon = 3"):
+        build_forecasters(cfg)
