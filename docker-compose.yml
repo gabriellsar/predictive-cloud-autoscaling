@@ -5,11 +5,7 @@ services:
       - ./data:/app/data
       - ./results:/app/results
       - ./configs:/app/configs:ro
-    # Se a agregação do rastro estourar a memória, aumente o limite do Docker Desktop
-    # ou rode a Fase 1 nativamente (exceção prevista no plano).
 
-  # Perfil de desenvolvimento: monta src/ e tests/ para iterar sem reconstruir a imagem.
-  # Uso: docker compose run --rm dev make test
   dev:
     profiles: ["dev"]
     build: .
