@@ -204,3 +204,44 @@ def test_interface_nao_depende_de_statsmodels() -> None:
         "tcc.forecast.NaiveForecaster()"
     )
     subprocess.run([sys.executable, "-c", code], check=True)
+
+
+# --------------------------------------------------------------------------------------
+# Cache de previsões usado na varredura de margens
+# --------------------------------------------------------------------------------------
+
+
+def test_cache_devolve_o_mesmo_que_o_previsor_envolvido() -> None:
+    from tcc.forecast.cache import CachedForecaster
+
+    y = synthetic_series()
+    plain = HoltWintersForecaster(season_period=SEASON)
+    cached = CachedForecaster(HoltWintersForecaster(season_period=SEASON))
+    plain.fit(y[:120])
+    cached.fit(y[:120])
+    origins = np.arange(120, 160)
+    for _ in range(2):  # a segunda passada vem toda do cache
+        np.testing.assert_allclose(
+            cached.forecast_many(y, origins, 2), plain.forecast_many(y, origins, 2)
+        )
+    assert cached.misses == len(origins)
+    assert cached.hits == len(origins)
+
+
+def test_cache_nao_olha_para_o_futuro_nem_confunde_historicos() -> None:
+    from tcc.forecast.cache import CachedForecaster
+
+    y = synthetic_series()
+    cached = CachedForecaster(ArimaForecaster(order=(2, 1, 2)))
+    cached.fit(y[:120])
+    origins = np.array([120, 130, 140])
+    expected = cached.forecast_many(y, origins, 2)
+
+    corrupted = y.copy()
+    corrupted[origins[-1] + 1 :] = -999.0
+    np.testing.assert_allclose(cached.forecast_many(corrupted, origins, 2), expected)
+
+    # um histórico do mesmo tamanho, mas com outro conteúdo, não pode reaproveitar a previsão
+    altered = y.copy()
+    altered[100] += 50.0
+    assert cached.forecast(altered[:131], 2) != cached.forecast(y[:131], 2)

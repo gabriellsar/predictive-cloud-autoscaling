@@ -16,6 +16,7 @@ import pandas as pd
 from tcc.data import load_series, split_series
 from tcc.eval.allocation import capacity_per_instance
 from tcc.forecast.base import Forecaster
+from tcc.forecast.cache import CachedForecaster
 from tcc.forecast.evaluate import build_forecasters
 from tcc.sim.policies import OraclePolicy, PredictivePolicy, ReactiveHPAPolicy, StaticPeakPolicy
 from tcc.sim.simulator import simulate
@@ -70,11 +71,13 @@ def prepare(cfg: dict[str, Any], verbose: bool = True) -> Setup:
     train = demand[splits["train"]]
     k = capacity_per_instance(train, int(cfg["sim"]["n_peak"]))
 
-    forecasters = build_forecasters(cfg)
-    for forecaster in forecasters:
+    forecasters: list[Forecaster] = []
+    for forecaster in build_forecasters(cfg):
         if verbose:
             print(f"[experimento] ajustando {forecaster.name} no treino...", flush=True)
         forecaster.fit(train)
+        # A previsão não depende da margem: o cache evita refazê-la a cada valor de m.
+        forecasters.append(CachedForecaster(forecaster))
     return Setup(demand, splits, k, float(train.max()), forecasters)
 
 
