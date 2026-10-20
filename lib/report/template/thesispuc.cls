@@ -799,6 +799,18 @@
 \newcommand{\puc@subtitle}{}
 \newcommand{\subtitle}[1]{\renewcommand{\puc@subtitle}{#1}}
 
+%% \day, \month e \year viram comandos de configuração com um argumento. Os
+%% originais (registradores do TeX) são guardados e restaurados antes do
+%% \begin{document}, pois o babel os usa para calcular \today.
+\let\puc@primday\day
+\let\puc@primmonth\month
+\let\puc@primyear\year
+\AddToHook{begindocument/before}{%
+  \let\day\puc@primday
+  \let\month\puc@primmonth
+  \let\year\puc@primyear
+}
+
 \newcommand{\puc@day}{}
 \renewcommand{\day}[1]{\renewcommand{\puc@day}{#1}}
 
@@ -1586,6 +1598,7 @@
   \puc@showtables%
   \if@pucepigraph
     \puc@showepigraph
+  \fi
   \puc@setmargins@text%
   \if@puctight
   \else
