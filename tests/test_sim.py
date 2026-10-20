@@ -204,3 +204,45 @@ def test_reactive_sobe_na_hora_e_desce_com_janela() -> None:
     assert result.n[peak_index] == 18  # ceil(900 / (100 * 0.5))
     # cinco origens depois do fim do pico a janela libera a redução
     assert result.n[-1] == 2  # ceil(100 / (100 * 0.5))
+
+
+# --- ceil na fronteira de inteiro ----------------------------------------------------
+
+
+def test_ceil_tolerante_conferido_a_mao() -> None:
+    from tcc.sim.policies import ceil_tolerant
+
+    assert ceil_tolerant(50.0) == 50
+    assert ceil_tolerant(50.0 + 1e-12) == 50  # um resíduo de ponto flutuante não sobe
+    assert ceil_tolerant(50.0 - 1e-12) == 50
+    assert ceil_tolerant(50.001) == 51  # um excesso real sobe
+    assert ceil_tolerant(50.0 + 1e-6) == 51
+    assert ceil_tolerant(0.0) == 0
+    assert ceil_tolerant(0.4) == 1
+
+
+def test_estatica_da_o_inteiro_exato_quando_ele_existe() -> None:
+    from fractions import Fraction
+
+    n_peak = 50
+    rng = np.random.default_rng(0)
+    peaks = [3221.1122678751262, *rng.uniform(100, 5000, 200)]
+    margins = [round(0.02 * i, 2) for i in range(31)]  # (1 + m) · 50 inteiro
+    for peak in peaks:
+        state = PolicyState(n_active=0, k=float(peak) / n_peak, lead_time=1)
+        for margin in margins:
+            expected = int((1 + Fraction(repr(margin))) * n_peak)
+            n = StaticPeakPolicy(float(peak), margin).required_instances(0, np.zeros(1), state)
+            assert n == expected, (peak, margin, n, expected)
+
+
+def test_estatica_insensivel_a_um_ulp_no_pico() -> None:
+    peak = 3047.196533551673
+    state = PolicyState(n_active=0, k=peak / 50, lead_time=1)
+    for neighbor in (np.nextafter(peak, np.inf), np.nextafter(peak, -np.inf)):
+        for margin in (0.0, 0.04, 0.12):
+            same = StaticPeakPolicy(peak, margin).required_instances(0, np.zeros(1), state)
+            other = StaticPeakPolicy(float(neighbor), margin).required_instances(
+                0, np.zeros(1), state
+            )
+            assert same == other

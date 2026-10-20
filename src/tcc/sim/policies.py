@@ -16,6 +16,7 @@ from typing import Protocol
 
 import numpy as np
 
+from tcc.eval.allocation import RELATIVE_TOLERANCE
 from tcc.forecast.base import Forecaster
 
 
@@ -34,9 +35,26 @@ class Policy(Protocol):
     def required_instances(self, tau: int, history: np.ndarray, state: PolicyState) -> int: ...
 
 
+def ceil_tolerant(x: float) -> int:
+    """`ceil(x)`, mas um `x` a menos de `RELATIVE_TOLERANCE` relativo de um inteiro conta
+    como esse inteiro.
+
+    Sem isso, quando o valor exato é inteiro (por exemplo `(1 + m) · pico / k` com
+    `k = pico / n_peak` e `(1 + m) · n_peak` inteiro), um *ulp* a mais no cálculo faz o
+    `ceil` pular para o inteiro de cima, e o resultado passa a depender da ordem de soma
+    do DuckDB. A tolerância é a mesma da comparação `d_t > k·n_t` em `eval/allocation.py`:
+    a capacidade que deixa de ser alocada é no máximo `RELATIVE_TOLERANCE · d_t`, que a
+    métrica de violação já trata como empate.
+    """
+    nearest = round(x)
+    if abs(x - nearest) <= RELATIVE_TOLERANCE * max(1.0, abs(x)):
+        return int(nearest)
+    return int(math.ceil(x))
+
+
 def _instances_for(demand: float, k: float, margin: float) -> int:
-    """`ceil((1 + m) · d / k)`, nunca negativo."""
-    return int(math.ceil(max(0.0, (1.0 + margin) * demand) / k))
+    """`ceil((1 + m) · d / k)`, nunca negativo (com a tolerância de `ceil_tolerant`)."""
+    return ceil_tolerant(max(0.0, (1.0 + margin) * demand) / k)
 
 
 class StaticPeakPolicy:
@@ -92,7 +110,7 @@ class ReactiveHPAPolicy:
 
     def required_instances(self, tau: int, history: np.ndarray, state: PolicyState) -> int:
         observed = float(history[-1])
-        recommended = int(math.ceil(observed / (state.k * self.target)))
+        recommended = ceil_tolerant(observed / (state.k * self.target))
         self._recommendations.append(recommended)
 
         utilization = observed / (state.k * max(state.n_active, 1))
