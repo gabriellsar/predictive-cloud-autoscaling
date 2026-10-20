@@ -68,6 +68,9 @@ def plot_pareto(table: pd.DataFrame, lead_time: int, epsilons: list[float], out:
             lw=1.3,
             label=label + (" (varia u*)" if policy == "reactive_hpa" else " (varia m)"),
             mfc="white" if policy == "reactive_hpa" else color,
+            # com a grade fina (passo 0,01), um marcador a cada 0,05 basta para identificar
+            # a série em preto e branco sem esconder a linha
+            markevery=5,
         )
 
     # rótulos dos extremos das varreduras, na curva do ARIMA e na reativa

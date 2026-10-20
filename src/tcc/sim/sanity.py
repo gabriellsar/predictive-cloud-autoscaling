@@ -85,7 +85,7 @@ def run_sanity(cfg: dict[str, Any]) -> tuple[pd.DataFrame, dict[str, SimResult],
 
     results: dict[str, SimResult] = {"oracle (m = 0)": oracle}
     results["static_peak (m = 0)"] = run(StaticPeakPolicy(train_peak, margin=0.0), cost_oracle)
-    for target in sim_cfg["hpa_targets"]:
+    for target in sim_cfg.get("sanity_hpa_targets", sim_cfg["hpa_targets"]):
         policy = ReactiveHPAPolicy(
             target_utilization=float(target),
             tolerance=float(sim_cfg["hpa_tolerance"]),
