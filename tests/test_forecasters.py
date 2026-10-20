@@ -301,3 +301,10 @@ def test_max_horizon_menor_que_o_necessario_e_erro_de_configuracao() -> None:
     cfg["forecast"]["nn"]["max_horizon"] = 3  # forecast.horizons vai até 6
     with pytest.raises(ValueError, match="max_horizon = 3"):
         build_forecasters(cfg)
+
+
+def test_toda_metrica_tem_casas_decimais_definidas() -> None:
+    from tcc.forecast.evaluate import METRIC_COLUMNS
+    from tcc.forecast.run import METRIC_DECIMALS
+
+    assert set(METRIC_DECIMALS) == set(METRIC_COLUMNS)

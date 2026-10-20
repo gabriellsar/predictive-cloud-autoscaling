@@ -6,8 +6,20 @@ import argparse
 
 from tcc.config import load_config
 from tcc.data.paths import resolve
-from tcc.forecast.evaluate import METRIC_COLUMNS, evaluate
+from tcc.forecast.evaluate import evaluate
 from tcc.forecast.figures import make_forecast_figures
+
+#: Casas decimais na tabela. MAE, RMSE e viés estão em máquinas equivalentes (~150) e o MAPE em
+#: %: duas casas bastam, e casas a mais só mostram ruído de ponto flutuante. Cobertura do MAPE
+#: e taxa de subestimação são frações (k / n_origins) e ficam com quatro.
+METRIC_DECIMALS = {
+    "mae": 2,
+    "rmse": 2,
+    "mape": 2,
+    "bias": 2,
+    "mape_coverage": 4,
+    "under_rate": 4,
+}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -22,7 +34,7 @@ def main(argv: list[str] | None = None) -> None:
     tables_dir = resolve("results/tables")
     tables_dir.mkdir(parents=True, exist_ok=True)
     out = tables_dir / "forecast_metrics.csv"
-    metrics.round({column: 4 for column in METRIC_COLUMNS}).to_csv(out, index=False)
+    metrics.round(METRIC_DECIMALS).to_csv(out, index=False)
     print(f"[previsão] métricas em {out}")
 
     if not args.skip_figures:
