@@ -1,8 +1,8 @@
 """Previsores e avaliação *walk-forward*.
 
-`Forecaster` e os previsores simples não dependem de `statsmodels`: a rede neural da
-semana seguinte implementa a mesma interface sem ele. Holt-Winters e ARIMA, que dependem,
-são importados sob demanda.
+`Forecaster` e os previsores simples não dependem de `statsmodels` nem de `torch`.
+Holt-Winters e ARIMA (que dependem do `statsmodels`) e a GRU (que depende do `torch`) são
+importados sob demanda.
 """
 
 from typing import Any
@@ -18,6 +18,7 @@ __all__ = [
     "ArimaForecaster",
     "BaseForecaster",
     "Forecaster",
+    "GRUForecaster",
     "HoltWintersForecaster",
     "MovingAverageForecaster",
     "NaiveForecaster",
@@ -29,6 +30,7 @@ __all__ = [
 
 _LAZY = {
     "ArimaForecaster": ("tcc.forecast.arima", "ArimaForecaster"),
+    "GRUForecaster": ("tcc.forecast.nn", "GRUForecaster"),
     "HoltWintersForecaster": ("tcc.forecast.holt_winters", "HoltWintersForecaster"),
     "build_forecasters": ("tcc.forecast.evaluate", "build_forecasters"),
     "evaluate": ("tcc.forecast.evaluate", "evaluate"),
@@ -37,7 +39,7 @@ _LAZY = {
 
 
 def __getattr__(name: str) -> Any:
-    """Importa sob demanda o que puxa `statsmodels` ou o pacote de dados."""
+    """Importa sob demanda o que puxa `statsmodels`, `torch` ou o pacote de dados."""
     if name in _LAZY:
         from importlib import import_module
 
