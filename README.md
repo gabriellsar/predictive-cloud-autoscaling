@@ -28,9 +28,15 @@ Requisitos: [`uv`](https://docs.astral.sh/uv/), `make` e, opcionalmente, Docker.
 git clone https://github.com/gabriellsar/predictive-cloud-autoscaling.git
 cd predictive-cloud-autoscaling
 make setup      # uv sync: dependências do projeto e de desenvolvimento
+uv sync --group nn  # opcional: PyTorch (só CPU) para a GRU
 make test       # testes
 bash scripts/download_alibaba.sh # baixa machine_usage ~1,7GB compactado
 ```
+
+O grupo `nn` instala o PyTorch do índice só para CPU (configurado no `pyproject.toml`, ~0,7 GB).
+Sem ele, tudo roda e a GRU é omitida com um aviso. Atenção: `make setup` (`uv sync`) remove
+pacotes fora dos grupos padrão, inclusive o `torch`; depois dele, rode de novo
+`uv sync --group nn`.
 ### Como rodar
 
 ```bash
@@ -42,11 +48,12 @@ Cada etapa também roda separadamente:
 | Alvo | O que faz | Gera |
 |---|---|---|
 | `make data` | Agrega o rastro bruto em uma série de 5 min e gera o relatório de qualidade | `data/processed/`, `results/data_quality.md` |
-| `make baselines` | Avalia os previsores | `results/tables/forecast_metrics.csv` |
+| `make baselines` | Avalia os previsores: naive, média móvel, sazonal ingênuo, Holt-Winters, ARIMA e GRU (com o grupo `nn`) | `results/tables/forecast_metrics.csv` |
 | `make sim` | Simula as políticas, escolhe os pontos de operação e gera as figuras | `results/tables/allocation_metrics.csv`, `results/figures/pareto_cost_violation.png` |
 | `make lint` | `ruff check` e `ruff format --check` | — |
 
 A lista completa de arquivos de `results/`, com o comando que gera cada um, está em
 [`results/README.md`](results/README.md). Todos os parâmetros (divisão, horizontes, `n_peak`,
 `L`, grades de `m` e `u*`, SLOs `ε`) ficam em [`configs/v0.toml`](configs/v0.toml), e nenhum
-fica fixo no código.
+fica fixo no código. Os hiperparâmetros da GRU estão em `[forecast.nn]`; com 1 *thread* de CPU, o
+treino leva cerca de 25 s e roda duas vezes em `make all` (uma em `baselines`, outra em `sim`).
