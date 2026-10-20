@@ -22,6 +22,7 @@ STYLES: dict[str, tuple[str, str, str, str]] = {
     "seasonal_naive": ("preditiva · sazonal ingênuo", "#2ca02c", "^", "-."),
     "holt_winters": ("preditiva · Holt-Winters", "#9467bd", "D", ":"),
     "arima": ("preditiva · ARIMA", "#d62728", "v", (0, (5, 1))),
+    "gru": ("preditiva · GRU", "#17becf", "h", (0, (3, 1, 1, 1, 1, 1))),
     "reactive_hpa": ("reativa (HPA)", "#000000", "P", "-"),
     "static_peak": ("estática no pico", "#7f7f7f", "X", ""),
     "oracle": ("oráculo", "#000000", "*", ""),

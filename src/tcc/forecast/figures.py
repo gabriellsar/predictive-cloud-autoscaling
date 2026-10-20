@@ -22,6 +22,7 @@ MODEL_COLORS = {
     "seasonal_naive": "#2ca02c",
     "holt_winters": "#9467bd",
     "arima": "#d62728",
+    "gru": "#17becf",
 }
 
 

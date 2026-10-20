@@ -7,6 +7,8 @@ origens de `val` e `test` inclui o fim do *split* anterior — isso é passado l
 
 from __future__ import annotations
 
+import importlib.util
+import warnings
 from typing import Any
 
 import numpy as np
@@ -30,15 +32,48 @@ METRIC_COLUMNS = ["mae", "rmse", "mape", "mape_coverage", "bias", "under_rate"]
 
 
 def build_forecasters(cfg: dict[str, Any]) -> list[Forecaster]:
-    """Monta os cinco previsores do v0 com os parâmetros de `configs/v0.toml`."""
+    """Monta os previsores com os parâmetros de `configs/v0.toml`.
+
+    Os cinco clássicos sempre entram. A GRU entra se o `torch` estiver instalado
+    (`uv sync --group nn`); sem ele, é omitida com um aviso e os demais seguem.
+    """
     fc = cfg["forecast"]
-    return [
+    forecasters: list[Forecaster] = [
         NaiveForecaster(),
         MovingAverageForecaster(int(fc["ma_window"])),
         SeasonalNaiveForecaster(int(fc["season_period"])),
         HoltWintersForecaster(int(fc["season_period"])),
         ArimaForecaster(tuple(int(v) for v in fc["arima_order"])),
     ]
+    if "nn" in fc:
+        nn_cfg = fc["nn"]
+        check_nn_horizon(cfg)
+        if importlib.util.find_spec("torch") is None:
+            warnings.warn(
+                "torch não está instalado: a GRU foi omitida (instale com `uv sync --group nn`)",
+                stacklevel=2,
+            )
+        else:
+            from tcc.forecast.nn import GRUForecaster
+
+            forecasters.append(GRUForecaster(**nn_cfg))
+    return forecasters
+
+
+def check_nn_horizon(cfg: dict[str, Any]) -> None:
+    """`max_horizon` da rede precisa cobrir os horizontes avaliados e os `L` da simulação."""
+    needed = [int(h) for h in cfg["forecast"]["horizons"]]
+    sim = cfg.get("sim", {})
+    if "lead_time" in sim:
+        needed.append(int(sim["lead_time"]))
+    needed += [int(lt) for lt in sim.get("sensitivity_lead_times", [])]
+    max_horizon = int(cfg["forecast"]["nn"]["max_horizon"])
+    if max_horizon < max(needed):
+        raise ValueError(
+            f"configuração inválida: forecast.nn.max_horizon = {max_horizon}, mas é preciso "
+            f"prever até h = {max(needed)} (forecast.horizons, sim.lead_time e "
+            "sim.sensitivity_lead_times)"
+        )
 
 
 def walk_forward(
