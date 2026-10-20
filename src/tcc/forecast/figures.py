@@ -64,7 +64,7 @@ def plot_forecast_vs_actual(
         fontsize=11,
     )
     ax.set_xticks(np.arange(0, days * 24 + 1, 6))
-    ax.legend(ncol=6, fontsize=9, loc="upper center")
+    ax.legend(ncol=len(models) + 1, fontsize=9, loc="upper center")
     ax.margins(x=0.01)
     fig.tight_layout()
     fig.savefig(out, dpi=DPI)
