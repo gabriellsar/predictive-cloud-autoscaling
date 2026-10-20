@@ -1,5 +1,52 @@
-# TCC — Alocação preditiva de recursos em nuvem
+# Trabalho de conclusão de curso Engenharia de Computação (PUC-Rio) 
 
-Protótipo v0. Veja `CLAUDE.md` e `docs/PLANO.md`.
+### Título: Alocação preditiva de recursos em nuvem via previsão de carga com Redes Neurais para minimização de custos operacionais
 
-    make setup && make lint && make test
+- Orientador: Adriano Francisco Branco
+- Coorientador: Jonatas dos Santos Grosman
+
+### O que é
+
+Um provedor de nuvem precisa decidir, a cada poucos minutos, quantas instâncias manter ativas.
+Instâncias demais custam caro; de menos, violam o acordo de nível de serviço (SLA). A alocação
+reativa só ajusta depois de ver a demanda mudar, e por isso chega atrasada nos picos. A
+alternativa é prever a demanda e provisionar antes.
+
+A pergunta do trabalho é **o quanto a qualidade da previsão de carga reduz o custo de alocação
+sem aumentar as violações de SLA**, comparando redes neurais com métodos tradicionais. Para que as
+diferenças possam ser atribuídas à previsão, **a política de alocação é fixa e só o previsor
+muda**. 
+
+A motivação e a revisão da literatura estão no relatório, em
+[`lib/report/main.tex`](lib/report/main.tex)
+
+### Instalação
+
+Requisitos: [`uv`](https://docs.astral.sh/uv/), `make` e, opcionalmente, Docker.
+
+```bash
+git clone https://github.com/gabriellsar/predictive-cloud-autoscaling.git
+cd predictive-cloud-autoscaling
+make setup      # uv sync: dependências do projeto e de desenvolvimento
+make test       # testes
+bash scripts/download_alibaba.sh # baixa machine_usage ~1,7GB compactado
+```
+### Como rodar
+
+```bash
+make all        # data → baselines → sim: reproduz todo o results/ a partir de data/raw/
+```
+
+Cada etapa também roda separadamente:
+
+| Alvo | O que faz | Gera |
+|---|---|---|
+| `make data` | Agrega o rastro bruto em uma série de 5 min e gera o relatório de qualidade | `data/processed/`, `results/data_quality.md` |
+| `make baselines` | Avalia os previsores | `results/tables/forecast_metrics.csv` |
+| `make sim` | Simula as políticas, escolhe os pontos de operação e gera as figuras | `results/tables/allocation_metrics.csv`, `results/figures/pareto_cost_violation.png` |
+| `make lint` | `ruff check` e `ruff format --check` | — |
+
+A lista completa de arquivos de `results/`, com o comando que gera cada um, está em
+[`results/README.md`](results/README.md). Todos os parâmetros (divisão, horizontes, `n_peak`,
+`L`, grades de `m` e `u*`, SLOs `ε`) ficam em [`configs/v0.toml`](configs/v0.toml), e nenhum
+fica fixo no código.
