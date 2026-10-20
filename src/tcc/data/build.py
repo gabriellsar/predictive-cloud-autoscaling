@@ -165,6 +165,13 @@ def _to_regular_grid(
     return out.reset_index(drop=True)[SERIES_COLUMNS]
 
 
+def round_demand(series: pd.DataFrame, decimals: int) -> pd.DataFrame:
+    """Arredonda `demand_cpu` e `demand_mem` para `decimals` casas (lacunas seguem `NaN`)."""
+    out = series.copy()
+    out[["demand_cpu", "demand_mem"]] = out[["demand_cpu", "demand_mem"]].round(decimals)
+    return out
+
+
 def build_series(
     raw_path: str | Path,
     out_path: str | Path,
@@ -204,6 +211,11 @@ def build_series(
         float(data.get("min_coverage", 0.0)),
         bool(data.get("trim_leading_missing", False)),
     )
+    # A média por *bucket* vem de uma soma paralela no DuckDB, cuja ordem varia entre
+    # execuções: sem arredondar, a demanda muda alguns *ulps* a cada `make data`, o que basta
+    # para mudar o ajuste do ARIMA e o `ceil` das políticas. Arredondar depois da
+    # interpolação deixa o Parquet, e tudo o que vem dele, reprodutível byte a byte.
+    series = round_demand(series, int(data["demand_decimals"]))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     series.to_parquet(out_path, index=False)
     print(

@@ -10,6 +10,7 @@ processed_dir = "data/processed"
 max_fill_gap = 3              # lacunas maiores que isso não são interpoladas
 min_coverage = 0.9            # buckets com cobertura abaixo disso viram lacuna (0 = aceita tudo)
 trim_leading_missing = true   # descarta o trecho inicial sem demanda válida
+demand_decimals = 6           # arredonda a demanda no Parquet: elimina a variação de 1 ulp da soma paralela do DuckDB
 duckdb_memory_limit = "12GB"
 duckdb_threads = 8
 
