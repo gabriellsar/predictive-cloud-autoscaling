@@ -181,3 +181,47 @@ def test_trim_leading_missing_descarta_o_trecho_inicial_invalido() -> None:
     assert len(out) == 3
     assert out["demand_cpu"].notna().all()
     assert out["bucket_start"].iloc[0] == 300  # o tempo absoluto é preservado
+
+
+# --- arredondamento da demanda no Parquet ---------------------------------------------
+
+
+def test_parquet_grava_a_demanda_arredondada(
+    synthetic_cfg: dict[str, Any], synthetic_series: pd.DataFrame
+) -> None:
+    decimals = int(synthetic_cfg["data"]["demand_decimals"])
+    for col in ("demand_cpu", "demand_mem"):
+        values = synthetic_series[col].dropna()
+        pd.testing.assert_series_equal(values, values.round(decimals))
+
+
+def test_round_demand_preserva_lacunas_e_as_demais_colunas() -> None:
+    from tcc.data.build import round_demand
+
+    series = pd.DataFrame(
+        {
+            "demand_cpu": [1282.4355574, float("nan")],
+            "demand_mem": [3584.5411716, 1.0],
+            "coverage": [0.98309712345, 1.0],
+        }
+    )
+    out = round_demand(series, 6)
+    assert out["demand_cpu"].iloc[0] == 1282.435557
+    assert math.isnan(out["demand_cpu"].iloc[1])
+    assert out["demand_mem"].iloc[0] == 3584.541172
+    pd.testing.assert_series_equal(out["coverage"], series["coverage"])
+    assert series["demand_cpu"].iloc[0] == 1282.4355574  # não altera a entrada
+
+
+def test_round_demand_absorve_variacao_de_um_ulp() -> None:
+    """A soma paralela do DuckDB pode mudar a média alguns *ulps* entre execuções."""
+    import numpy as np
+
+    from tcc.data.build import round_demand
+
+    rng = np.random.default_rng(0)
+    values = rng.uniform(500, 4000, 1000)
+    a = pd.DataFrame({"demand_cpu": values, "demand_mem": values})
+    shifted = np.nextafter(np.nextafter(values, np.inf), np.inf)  # dois ulps acima
+    b = pd.DataFrame({"demand_cpu": shifted, "demand_mem": shifted})
+    pd.testing.assert_frame_equal(round_demand(a, 6), round_demand(b, 6))
