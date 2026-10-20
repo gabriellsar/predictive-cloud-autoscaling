@@ -18,7 +18,7 @@ diferenças possam ser atribuídas à previsão, **a política de alocação é 
 muda**. 
 
 A motivação e a revisão da literatura estão no relatório, em
-[`lib/report/main.tex`](lib/report/main.tex)
+[`lib/report/main.pdf`](lib/report/main.pdf)
 
 ### Instalação
 
