@@ -12,7 +12,7 @@ com os parâmetros de `configs/v0.toml`.
 | `figures/series_day.png` | Um dia ampliado: variação intradiária de CPU e memória | `make data` |
 | `figures/acf_cpu.png` | Autocorrelação da demanda até 2 dias, só no treino, com o período de 288 marcado | `make data` |
 | `figures/cpu_vs_mem.png` | Dispersão CPU × memória no treino, com a correlação de Pearson | `make data` |
-| `tables/forecast_metrics.csv` | MAE, RMSE, MAPE, viés e taxa de subestimação por previsor, horizonte e *split* | `make baselines` |
+| `tables/forecast_metrics.csv` | MAE, RMSE, MAPE, viés e taxa de subestimação por previsor (cinco clássicos e GRU), horizonte e *split* | `make baselines` |
 | `figures/forecast_vs_actual.png` | Previsão contra demanda real no início do teste, h = 1 | `make baselines` |
 | `figures/rmse_by_model.png` | RMSE no teste por previsor e horizonte | `make baselines` |
 | `sanity.md` | Verificações de sanidade do simulador (G2), com as simplificações do modelo | `make sim` |
@@ -27,5 +27,8 @@ com os parâmetros de `configs/v0.toml`.
 
 `make sim` depende de `data/processed/` (de `make data`) e de `tables/forecast_metrics.csv`
 (de `make baselines`). A ordem é a de `make all`: `data` → `baselines` → `sim`.
+
+A GRU (`gru` nas tabelas) só aparece se o grupo `nn` estiver instalado (`uv sync --group nn`);
+sem ele, `make baselines` e `make sim` seguem com os cinco previsores clássicos e avisam a omissão.
 
 Em `operating_points.csv`, `n/a` significa que nenhum parâmetro da grade cumpriu ε na validação.
