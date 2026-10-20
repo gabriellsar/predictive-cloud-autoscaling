@@ -15,10 +15,7 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest", "ruff", "ipykernel"]
-# Grupo da semana seguinte (rede neural): declarado e travado no uv.lock, mas NÃO instalado
-# nesta semana (`uv sync` instala só o grupo padrão e `dev`; o nn exige `uv sync --group nn`).
-# Quando entrar, apontar para o índice CPU do PyTorch via [[tool.uv.index]] explícito +
-# [tool.uv.sources] (confirmar a sintaxe na doc atual do uv antes de usar).
+
 nn = ["torch"]
 
 # PyTorch só para CPU: o índice explícito é usado apenas pelo torch, o resto vem do PyPI.
@@ -43,8 +40,7 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]
-# O ruff 0.17 também formata blocos de código dentro de Markdown; as specs em docs/ são
-# documentação do Gabriel e não devem ser reescritas pelo formatador.
+
 extend-exclude = ["docs"]
 
 [tool.ruff.lint]

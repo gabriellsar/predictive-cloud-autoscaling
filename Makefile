@@ -10,7 +10,6 @@ lint:
 test:
 	uv run pytest -q
 
-# Fases 1, 2 e 3/4: os módulos abaixo serão criados pelo agente seguindo docs/specs/.
 data:
 	uv run python -m tcc.data.build
 

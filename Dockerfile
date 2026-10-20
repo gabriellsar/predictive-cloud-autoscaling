@@ -10,8 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends make \
 
 WORKDIR /app
 
-# Camada de dependências (cache). O grupo dev (pytest, ruff) fica na imagem
-# para que `docker compose run --rm app make test` funcione.
 COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --frozen --no-install-project
 
@@ -22,8 +20,6 @@ COPY scripts ./scripts
 COPY Makefile README.md ./
 RUN uv sync --frozen
 
-# O ambiente já está pronto e é somente leitura para o usuário não-root: `uv run` dentro do
-# contêiner não deve tentar re-sincronizar o projeto (escreveria em /opt/venv e falharia).
 ENV UV_NO_SYNC=1
 
 RUN useradd -m app && mkdir -p data results && chown -R app:app /app
