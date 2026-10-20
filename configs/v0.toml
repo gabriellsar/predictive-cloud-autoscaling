@@ -19,6 +19,20 @@ ma_window = 6
 season_period = 288           # 1 dia em intervalos de 5 min
 arima_order = [2, 1, 2]
 
+[forecast.nn]
+# GRU univariada (spec 05). max_horizon precisa cobrir forecast.horizons e os L da simulação.
+window = 72                   # intervalos de histórico na entrada (6 h)
+max_horizon = 6               # a rede prevê h = 1..max_horizon de uma vez
+hidden_size = 32
+num_layers = 1
+epochs = 100
+batch_size = 32
+learning_rate = 0.001
+val_fraction = 0.15           # fim do treino reservado para early stopping
+patience = 10                 # épocas sem melhora na validação interna antes de parar
+seed = 42
+num_threads = 1               # rede pequena: 1 thread é mais rápido (25 s × 79 s com 10)
+
 [sim]
 n_peak = 50                   # instâncias necessárias no pico do treino (define k)
 cost_per_instance = 1.0
