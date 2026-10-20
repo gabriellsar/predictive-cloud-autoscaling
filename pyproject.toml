@@ -21,6 +21,15 @@ dev = ["pytest", "ruff", "ipykernel"]
 # [tool.uv.sources] (confirmar a sintaxe na doc atual do uv antes de usar).
 nn = ["torch"]
 
+# PyTorch só para CPU: o índice explícito é usado apenas pelo torch, o resto vem do PyPI.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
