@@ -702,8 +702,8 @@
 \newcommand{\curso}[1]{\renewcommand{\puc@course}{#1}}
 \newcommand{\puc@degree}{Engenheiro de Computação}
 \newcommand{\titulacao}[1]{\renewcommand{\puc@degree}{#1}}
-\newcommand{\puc@discipline}{Projeto Final I}
-\newcommand{\puc@disciplineuk}{Undergraduate Thesis I}
+\newcommand{\puc@discipline}{Projeto Final}
+\newcommand{\puc@disciplineuk}{Undergraduate Thesis}
 \newcommand{\disciplina}[2]{%
   \renewcommand{\puc@discipline}{#1}%
   \renewcommand{\puc@disciplineuk}{#2}}
