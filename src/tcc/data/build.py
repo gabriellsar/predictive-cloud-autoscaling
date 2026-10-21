@@ -16,10 +16,12 @@ from pathlib import Path
 from typing import Any
 
 import duckdb
+import numpy as np
 import pandas as pd
 
 from tcc.config import load_config
 from tcc.data.paths import connect, interim_path, processed_path, resolve
+from tcc.data.series import split_series
 
 #: Esquema real do `machine_usage` do rastro Alibaba 2018 (arquivo sem cabeçalho).
 RAW_COLUMNS: dict[str, str] = {
@@ -43,6 +45,46 @@ SERIES_COLUMNS = [
     "n_machines_reporting",
     "filled",
 ]
+
+#: Tratamentos das lacunas maiores que `max_fill_gap` (`data.long_gap_fill`).
+LONG_GAP_FILL_METHODS = ("none", "seasonal")
+
+
+def gap_runs(missing: pd.Series) -> list[tuple[int, int]]:
+    """Sequências contíguas de valores verdadeiros, como (posição inicial, comprimento)."""
+    runs: list[tuple[int, int]] = []
+    start: int | None = None
+    for t, flag in enumerate(missing):
+        if flag and start is None:
+            start = t
+        elif not flag and start is not None:
+            runs.append((start, t - start))
+            start = None
+    if start is not None:
+        runs.append((start, len(missing) - start))
+    return runs
+
+
+def _seasonal_fill(values: np.ndarray, start: int, length: int, season_period: int) -> bool:
+    """Preenche `values[start:start + length]` no lugar, a partir do dia anterior.
+
+    Cada ponto da lacuna recebe o valor de `s = season_period` intervalos antes, somado a uma
+    correção que varia linearmente entre a diferença `d − d_{−s}` observada na borda esquerda e
+    a observada na borda direita. Assim, o trecho preenchido tem a forma do mesmo horário no
+    dia anterior e coincide com o nível da série nas duas bordas. Devolve falso, sem alterar
+    nada, se a lacuna tocar o início ou o fim da série ou se o dia anterior não tiver dado.
+    """
+    left, right = start - 1, start + length
+    if left - season_period < 0 or right >= len(values):
+        return False
+    previous_day = values[left - season_period : right - season_period + 1]
+    if np.isnan(previous_day).any() or np.isnan(values[[left, right]]).any():
+        return False
+    offset_left = values[left] - previous_day[0]
+    offset_right = values[right] - previous_day[-1]
+    weight = np.arange(1, length + 1) / (length + 1)
+    values[start:right] = previous_day[1:-1] + offset_left + (offset_right - offset_left) * weight
+    return True
 
 
 def _columns_sql() -> str:
@@ -119,17 +161,27 @@ def _to_regular_grid(
     max_fill_gap: int,
     min_coverage: float = 0.0,
     trim_leading_missing: bool = False,
+    long_gap_fill: str = "none",
+    season_period: int | None = None,
 ) -> pd.DataFrame:
     """Reindexa para a grade completa de *buckets*, converte para demanda e preenche lacunas.
 
-    Só lacunas internas de até `max_fill_gap` intervalos são interpoladas linearmente; as
-    maiores permanecem `NaN` e são sinalizadas no relatório de qualidade.
+    Lacunas internas de até `max_fill_gap` intervalos são interpoladas linearmente. As
+    maiores permanecem `NaN` com `long_gap_fill = "none"`; com `"seasonal"`, recebem o mesmo
+    horário do dia anterior, ajustado às bordas (`_seasonal_fill`). Em ambos os casos, elas
+    são sinalizadas no relatório de qualidade.
 
     `min_coverage` trata como lacuna todo *bucket* em que menos que essa fração das `N`
     máquinas reportou: com poucas máquinas, a média do cluster multiplicada por `N` é uma
     extrapolação ruidosa. `trim_leading_missing` descarta o trecho inicial que sobrar sem
-    demanda válida. Os padrões (0.0 e falso) preservam a definição original da spec.
+    demanda válida. Os padrões (0.0, falso e "none") preservam a definição original da spec.
     """
+    if long_gap_fill not in LONG_GAP_FILL_METHODS:
+        raise ValueError(
+            f"long_gap_fill = {long_gap_fill!r} inválido; use um de {LONG_GAP_FILL_METHODS}"
+        )
+    if long_gap_fill == "seasonal" and season_period is None:
+        raise ValueError('long_gap_fill = "seasonal" exige season_period')
     grid = pd.RangeIndex(0, int(df["bucket"].max()) + 1, name="bucket")
     df = df.set_index("bucket").reindex(grid)
 
@@ -157,12 +209,45 @@ def _to_regular_grid(
         out[col] = out[col].where(~fillable, interpolated)
     out["filled"] = fillable & out["demand_cpu"].notna()
 
+    if long_gap_fill == "seasonal":
+        cpu = out["demand_cpu"].to_numpy(dtype=float, copy=True)
+        mem = out["demand_mem"].to_numpy(dtype=float, copy=True)
+        filled = out["filled"].to_numpy(copy=True)
+        for start, length in gap_runs(out["demand_cpu"].isna()):
+            # A memória só é preenchida se a CPU foi: `filled` vale para as duas colunas.
+            if _seasonal_fill(cpu, start, length, season_period):
+                _seasonal_fill(mem, start, length, season_period)
+                filled[start : start + length] = True
+        out["demand_cpu"], out["demand_mem"], out["filled"] = cpu, mem, filled
+
     if trim_leading_missing:
         valid = out["demand_cpu"].notna()
         if valid.any():
             out = out.loc[valid.idxmax() :]
 
     return out.reset_index(drop=True)[SERIES_COLUMNS]
+
+
+def long_filled_runs(series: pd.DataFrame, max_fill_gap: int) -> list[tuple[int, int]]:
+    """Trechos preenchidos maiores que `max_fill_gap`, isto é, os do preenchimento sazonal."""
+    return [run for run in gap_runs(series["filled"]) if run[1] > max_fill_gap]
+
+
+def check_long_fills_in_train(series: pd.DataFrame, cfg: dict[str, Any]) -> None:
+    """Recusa a série se uma lacuna longa preenchida usar dados de fora do treino.
+
+    O preenchimento sazonal usa a borda direita da lacuna, que é posterior a ela. No treino,
+    isso só afeta o ajuste dos previsores, que já vê o treino inteiro. Na validação ou no
+    teste, uma previsão feita dentro da lacuna usaria dados posteriores à origem.
+    """
+    train_stop = split_series(series, cfg)["train"].stop
+    for start, length in long_filled_runs(series, int(cfg["data"]["max_fill_gap"])):
+        if start + length >= train_stop:
+            raise ValueError(
+                f"a lacuna t = {start}..{start + length - 1} foi preenchida com dados até "
+                f"t = {start + length}, fora do treino (que termina em t = {train_stop - 1}); "
+                'isso vazaria dados posteriores à origem. Use data.long_gap_fill = "none".'
+            )
 
 
 def round_demand(series: pd.DataFrame, decimals: int) -> pd.DataFrame:
@@ -210,7 +295,10 @@ def build_series(
         int(data["max_fill_gap"]),
         float(data.get("min_coverage", 0.0)),
         bool(data.get("trim_leading_missing", False)),
+        str(data.get("long_gap_fill", "none")),
+        int(cfg["forecast"]["season_period"]),
     )
+    check_long_fills_in_train(series, cfg)
     # A média por *bucket* vem de uma soma paralela no DuckDB, cuja ordem varia entre
     # execuções: sem arredondar, a demanda muda alguns *ulps* a cada `make data`, o que basta
     # para mudar o ajuste do ARIMA e o `ceil` das políticas. Arredondar depois da

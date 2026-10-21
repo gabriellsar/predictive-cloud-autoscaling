@@ -11,7 +11,7 @@ import pytest
 
 from tcc.config import load_config
 from tcc.data import build_series, load_series, split_series
-from tcc.data.build import _to_regular_grid
+from tcc.data.build import _to_regular_grid, check_long_fills_in_train
 from tcc.data.paths import processed_path
 
 # Duas máquinas, intervalos de 300 s. As médias abaixo são conferidas à mão no teste:
@@ -55,6 +55,7 @@ def synthetic_cfg(tmp_path: Path) -> dict[str, Any]:
         # testes próprios e não devem variar conforme o que estiver em configs/v0.toml.
         "min_coverage": 0.0,
         "trim_leading_missing": False,
+        "long_gap_fill": "none",
     }
     return cfg
 
@@ -181,6 +182,97 @@ def test_trim_leading_missing_descarta_o_trecho_inicial_invalido() -> None:
     assert len(out) == 3
     assert out["demand_cpu"].notna().all()
     assert out["bucket_start"].iloc[0] == 300  # o tempo absoluto é preservado
+
+
+# --- preenchimento sazonal das lacunas longas ------------------------------------------
+
+
+def _grade_com_lacuna(values: list[float], **kwargs: Any) -> pd.DataFrame:
+    """Grade com N = 100 máquinas, para que a demanda seja igual à utilização média."""
+    present = [t for t, v in enumerate(values) if not math.isnan(v)]
+    raw = pd.DataFrame(
+        {
+            "bucket": present,
+            "cpu_util_mean": [values[t] for t in present],
+            "mem_util_mean": [values[t] / 2 for t in present],
+            "n_machines_reporting": [100] * len(present),
+        }
+    )
+    return _to_regular_grid(raw, n_machines=100, interval=300, max_fill_gap=3, **kwargs)
+
+
+NAN = float("nan")
+
+
+def test_preenchimento_sazonal_confere_com_a_conta_feita_a_mao() -> None:
+    # s = 6. O dia anterior da lacuna t = 7..10 é t = 1..4; as bordas são t = 6 e t = 11.
+    #   correção na borda esquerda: d[6] − d[0] = 12 − 10 = 2
+    #   correção na borda direita:  d[11] − d[5] = 70 − 60 = 10
+    #   pesos 1/5 .. 4/5: t = 7 -> 20 + 2 + 8·0,2 = 23,6 ; t = 10 -> 50 + 2 + 8·0,8 = 58,4
+    values = [10, 20, 30, 40, 50, 60, 12, NAN, NAN, NAN, NAN, 70, 15, 25]
+    out = _grade_com_lacuna(values, long_gap_fill="seasonal", season_period=6)
+    assert out["demand_cpu"].iloc[7:11].tolist() == pytest.approx([23.6, 35.2, 46.8, 58.4])
+    # A memória segue a mesma regra sobre a própria série (metade da CPU aqui).
+    assert out["demand_mem"].iloc[7:11].tolist() == pytest.approx([11.8, 17.6, 23.4, 29.2])
+    assert out["filled"].tolist() == [False] * 7 + [True] * 4 + [False] * 3
+    # As bordas e o resto da série não mudam.
+    assert out["demand_cpu"].iloc[[6, 11]].tolist() == [12, 70]
+
+
+def test_preenchimento_sazonal_sem_dia_anterior_deixa_a_lacuna() -> None:
+    # A lacuna t = 2..5 não tem um dia inteiro antes dela (s = 6): fica NaN.
+    values = [10, 20, NAN, NAN, NAN, NAN, 12, 22, 32, 42]
+    out = _grade_com_lacuna(values, long_gap_fill="seasonal", season_period=6)
+    assert out["demand_cpu"].iloc[2:6].isna().all()
+    assert not out["filled"].any()
+
+
+def test_preenchimento_none_preserva_a_definicao_original() -> None:
+    values = [10, 20, 30, 40, 50, 60, 12, NAN, NAN, NAN, NAN, 70, 15, 25]
+    out = _grade_com_lacuna(values)
+    assert out["demand_cpu"].iloc[7:11].isna().all()
+    assert not out["filled"].any()
+
+
+def test_preenchimento_longo_rejeita_metodo_desconhecido() -> None:
+    with pytest.raises(ValueError, match="long_gap_fill"):
+        _grade_com_lacuna([10, 20, 30], long_gap_fill="linear")
+    with pytest.raises(ValueError, match="season_period"):
+        _grade_com_lacuna([10, 20, 30], long_gap_fill="seasonal")
+
+
+@pytest.mark.parametrize(
+    ("filled_range", "leaks"),
+    [
+        (range(2, 6), False),
+        (range(7, 11), False),  # borda direita em t = 11, último ponto do treino
+        (range(8, 12), True),  # borda direita em t = 12, primeiro ponto da validação
+        (range(13, 17), True),
+        (range(9, 11), False),  # curta (≤ max_fill_gap): interpolação linear, fora da regra
+    ],
+)
+def test_lacuna_longa_preenchida_precisa_ficar_no_treino(
+    synthetic_cfg: dict[str, Any], filled_range: range, leaks: bool
+) -> None:
+    """Com 20 intervalos e 60/20/20, o treino é t = 0..11."""
+    filled = [t in filled_range for t in range(20)]
+    series = pd.DataFrame({"demand_cpu": range(20), "filled": filled})
+    if leaks:
+        with pytest.raises(ValueError, match="fora do treino"):
+            check_long_fills_in_train(series, synthetic_cfg)
+    else:
+        check_long_fills_in_train(series, synthetic_cfg)
+
+
+def test_serie_real_so_tem_lacunas_preenchidas_no_treino() -> None:
+    """Na série real, nada preenchido fora do treino e nenhum NaN, se ela já existir."""
+    cfg = load_config()
+    if not processed_path(cfg).exists():
+        pytest.skip("série real ainda não construída (rode `make data`)")
+    series = load_series(cfg)
+    splits = split_series(series, cfg)
+    assert series["demand_cpu"].notna().all()
+    assert not series["filled"].iloc[splits["train"].stop :].any()
 
 
 # --- arredondamento da demanda no Parquet ---------------------------------------------
