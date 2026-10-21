@@ -7,9 +7,10 @@ split = { train = 0.6, val = 0.2, test = 0.2 }
 raw_path = "data/raw/machine_usage.csv"
 interim_dir = "data/interim"
 processed_dir = "data/processed"
-max_fill_gap = 3              # lacunas maiores que isso não são interpoladas
-min_coverage = 0.9            # buckets com cobertura abaixo disso viram lacuna (0 = aceita tudo)
-trim_leading_missing = true   # descarta o trecho inicial sem demanda válida
+max_fill_gap = 3              # lacunas de até 3 intervalos: interpolação linear
+long_gap_fill = "seasonal"    # lacunas maiores: "seasonal" (dia anterior ajustado às bordas) | "none" (NaN)
+min_coverage = 0.5            # buckets com cobertura abaixo disso viram lacuna (0 = aceita tudo)
+trim_leading_missing = false  # rastro completo: o trecho inicial, de cobertura menor, é mantido
 demand_decimals = 6           # arredonda a demanda no Parquet: elimina a variação de 1 ulp da soma paralela do DuckDB
 duckdb_memory_limit = "12GB"
 duckdb_threads = 8
