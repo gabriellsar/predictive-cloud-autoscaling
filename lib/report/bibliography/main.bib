@@ -1,24 +1,29 @@
 % Referências de introduction.tex
-@comment{TODO: conferir volume, número e páginas na versão publicada (xu2022esdnn)}
 @article{xu2022esdnn,
   author  = {Xu, Minxian and Song, Chenghao and Wu, Huaming and Gill, Sukhpal Singh and Ye, Kejiang and Xu, Chengzhong},
-  title   = {{esDNN}: Deep Neural Network based Multivariate Workload Prediction Approach in Cloud Environments},
+  title   = {{esDNN}: Deep Neural Network Based Multivariate Workload Prediction in Cloud Computing Environments},
   journal = {ACM Transactions on Internet Technology},
+  volume  = {22},
+  number  = {3},
+  pages   = {75:1--75:24},
   year    = {2022},
-  note    = {Disponível em: \url{https://arxiv.org/abs/2203.02684}}
+  doi     = {10.1145/3524114}
 }
 
-@comment{TODO: conferir ano e veículo de publicação (periódico ou arXiv) e trocar o tipo para article se for o caso (rossi2023forecasting)}
-@misc{rossi2023forecasting,
-  author = {Rossi, Andrea and Visentin, Andrea and Carraro, Diego and Prestwich, Steven and Brown, Kenneth N.},
-  title  = {Forecasting Workload in Cloud Computing: Towards Uncertainty-Aware Predictions and Transfer Learning},
-  year   = {2023},
-  note   = {Código e dados disponíveis em: \url{https://github.com/andreareds/TowardsUncertaintyAwareWorkloadPrediction}}
+@article{rossi2023forecasting,
+  author  = {Rossi, Andrea and Visentin, Andrea and Carraro, Diego and Prestwich, Steven and Brown, Kenneth N.},
+  title   = {Forecasting workload in cloud computing: towards uncertainty-aware predictions and transfer learning},
+  journal = {Cluster Computing},
+  volume  = {28},
+  number  = {4},
+  pages   = {258},
+  year    = {2025},
+  doi     = {10.1007/s10586-024-04933-2},
+  note    = {Código e dados disponíveis em: \url{https://github.com/andreareds/TowardsUncertaintyAwareWorkloadPrediction}}
 }
 
-@comment{TODO: conferir o primeiro nome completo do segundo autor (bodra2025ml)}
 @article{bodra2025ml,
-  author  = {Bodra, Deep and Khairnar, S.},
+  author  = {Bodra, Deep and Khairnar, Sushil},
   title   = {Machine learning-based cloud resource allocation algorithms: a comprehensive comparative review},
   journal = {Frontiers in Computer Science},
   volume  = {7},
@@ -102,7 +107,6 @@
   year    = {2011}
 }
 
-@comment{TODO: conferir páginas; só manter se o CloudSim Plus continuar como opção (silvafilho2017cloudsimplus)}
 @inproceedings{silvafilho2017cloudsimplus,
   author    = {Silva Filho, Manoel C. and Oliveira, Raysa L. and Monteiro, Claudio C. and In{\'a}cio, Pedro R. M. and Freire, M{\'a}rio M.},
   title     = {{CloudSim Plus}: a cloud computing simulation framework pursuing software engineering principles for improved modularity, extensibility and correctness},
@@ -203,4 +207,93 @@
   year      = {2010},
   editor    = {van der Walt, St{\'e}fan and Millman, Jarrod},
   doi       = {10.25080/Majora-92bf1922-00a}
+}
+
+% Referências acrescentadas ao fechar o Capítulo 2
+
+@article{agullo2025enhancing,
+  author  = {{\relax Agull\'o L\'opez}, Ferran and Guti{\'e}rrez-Torre, Alberto and Torres, Jordi and Berral, Josep Ll.},
+  title   = {Enhancing the output of time series forecasting algorithms for cloud resource provisioning},
+  journal = {Future Generation Computer Systems},
+  volume  = {170},
+  pages   = {107833},
+  year    = {2025},
+  doi     = {10.1016/j.future.2025.107833}
+}
+
+@article{pan2023magicscaler,
+  author  = {Pan, Zhicheng and Wang, Yihang and Zhang, Yingying and Yang, Sean Bin and Cheng, Yunyao and Chen, Peng and Guo, Chenjuan and Wen, Qingsong and Tian, Xiduo and Dou, Yunliang and Zhou, Zhiqiang and Yang, Chengcheng and Zhou, Aoying and Yang, Bin},
+  title   = {{MagicScaler}: Uncertainty-aware, Predictive Autoscaling},
+  journal = {Proceedings of the VLDB Endowment},
+  volume  = {16},
+  number  = {12},
+  pages   = {3808--3821},
+  year    = {2023},
+  doi     = {10.14778/3611540.3611566}
+}
+
+@article{bengio1994learning,
+  author  = {Bengio, Yoshua and Simard, Patrice and Frasconi, Paolo},
+  title   = {Learning long-term dependencies with gradient descent is difficult},
+  journal = {IEEE Transactions on Neural Networks},
+  volume  = {5},
+  number  = {2},
+  pages   = {157--166},
+  year    = {1994}
+}
+
+@inproceedings{chung2014empirical,
+  author    = {Chung, Junyoung and Gulcehre, Caglar and Cho, Kyunghyun and Bengio, Yoshua},
+  title     = {Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling},
+  booktitle = {NIPS 2014 Workshop on Deep Learning},
+  year      = {2014},
+  note      = {Disponível em: \url{https://arxiv.org/abs/1412.3555}}
+}
+
+@article{taieb2012strategies,
+  author  = {Ben Taieb, Souhaib and Bontempi, Gianluca and Atiya, Amir F. and Sorjamaa, Antti},
+  title   = {A review and comparison of strategies for multi-step ahead time series forecasting based on the {NN5} forecasting competition},
+  journal = {Expert Systems with Applications},
+  volume  = {39},
+  number  = {8},
+  pages   = {7067--7083},
+  year    = {2012}
+}
+
+@inproceedings{raasveldt2019duckdb,
+  author    = {Raasveldt, Mark and M{\"u}hleisen, Hannes},
+  title     = {{DuckDB}: an Embeddable Analytical Database},
+  booktitle = {Proceedings of the 2019 International Conference on Management of Data (SIGMOD '19)},
+  publisher = {ACM},
+  pages     = {1981--1984},
+  year      = {2019},
+  doi       = {10.1145/3299869.3320212}
+}
+
+@article{harris2020numpy,
+  author  = {Harris, Charles R. and Millman, K. Jarrod and van der Walt, St{\'e}fan J. and others},
+  title   = {Array programming with {NumPy}},
+  journal = {Nature},
+  volume  = {585},
+  pages   = {357--362},
+  year    = {2020},
+  doi     = {10.1038/s41586-020-2649-2}
+}
+
+@article{hunter2007matplotlib,
+  author  = {Hunter, John D.},
+  title   = {Matplotlib: A {2D} Graphics Environment},
+  journal = {Computing in Science \& Engineering},
+  volume  = {9},
+  number  = {3},
+  pages   = {90--95},
+  year    = {2007},
+  doi     = {10.1109/MCSE.2007.55}
+}
+
+@misc{rosas2026repo,
+  author = {Rosas, Gabriel Lobo de Sant'Anna},
+  title  = {predictive-cloud-autoscaling: código do Projeto Final},
+  year   = {2026},
+  note   = {Disponível em: \url{https://github.com/gabriellsar/predictive-cloud-autoscaling}. Acesso em: 20 out. 2026}
 }
