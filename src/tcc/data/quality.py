@@ -12,8 +12,11 @@ from typing import Any
 
 import pandas as pd
 
+from tcc.data.build import gap_runs, long_filled_runs
 from tcc.data.paths import connect, interim_path, resolve
 from tcc.data.series import load_series, split_series
+
+SPLIT_LABELS = {"train": "no treino", "val": "na validação", "test": "no teste"}
 
 
 def _pt(value: Any) -> str:
@@ -27,21 +30,6 @@ def _pt(value: Any) -> str:
     else:
         return str(value)
     return text.replace(",", "\x00").replace(".", ",").replace("\x00", ".")
-
-
-def _gap_runs(no_data: pd.Series) -> list[tuple[int, int]]:
-    """Sequências contíguas de *buckets* sem dado, como (início, comprimento)."""
-    runs: list[tuple[int, int]] = []
-    start: int | None = None
-    for t, missing in enumerate(no_data):
-        if missing and start is None:
-            start = t
-        elif not missing and start is not None:
-            runs.append((start, t - start))
-            start = None
-    if start is not None:
-        runs.append((start, len(no_data) - start))
-    return runs
 
 
 def collect_metrics(cfg: dict[str, Any]) -> pd.DataFrame:
@@ -104,13 +92,24 @@ def collect_metrics(cfg: dict[str, Any]) -> pd.DataFrame:
     n_rows = int(totals["n_rows"])
     t = len(series)
     no_data = series["n_machines_reporting"] == 0
-    runs = _gap_runs(no_data)
-    big_runs = [r for r in runs if r[1] > max_fill_gap]
+    low_coverage = ~no_data & (series["coverage"] < float(data["min_coverage"]))
+    # Lacuna é todo intervalo sem demanda própria: sem dado, abaixo de `min_coverage` ou
+    # preenchido. Os preenchidos continuam contando como lacuna, só que tratada.
+    gap = series["filled"] | series["demand_cpu"].isna()
+    big_runs = [r for r in gap_runs(gap) if r[1] > max_fill_gap]
+    seasonal_runs = set(long_filled_runs(series, max_fill_gap))
+    n_seasonal = sum(length for _, length in seasonal_runs)
+    observed = series[~gap]
     splits = split_series(series, cfg)
 
     rows: list[tuple[str, Any, str]] = [
         ("source", data["source"], "fonte dos dados"),
         ("min_coverage", data["min_coverage"], "cobertura mínima para o intervalo valer"),
+        (
+            "long_gap_fill",
+            data.get("long_gap_fill", "none"),
+            "tratamento das lacunas maiores que max_fill_gap",
+        ),
         (
             "trim_leading_missing",
             data["trim_leading_missing"],
@@ -152,27 +151,57 @@ def collect_metrics(cfg: dict[str, Any]) -> pd.DataFrame:
             float((series["coverage"] < 1.0).mean()),
             "fração de intervalos em que não todas as N máquinas reportaram",
         ),
-        ("coverage_min", float(series["coverage"].min()), "cobertura mínima entre os intervalos"),
+        (
+            "coverage_min",
+            float(observed["coverage"].min()),
+            "cobertura mínima entre os intervalos observados (não preenchidos)",
+        ),
         (
             "coverage_median",
-            float(series["coverage"].median()),
-            "cobertura mediana entre os intervalos",
+            float(observed["coverage"].median()),
+            "cobertura mediana entre os intervalos observados (não preenchidos)",
         ),
+    ]
+    for name, sl in splits.items():
+        coverage = observed.loc[observed.index.isin(range(sl.start, sl.stop)), "coverage"]
+        rows.append(
+            (
+                f"coverage_{name}_min_median_mean",
+                f"{coverage.min():.4f}/{coverage.median():.4f}/{coverage.mean():.4f}",
+                f"cobertura {SPLIT_LABELS[name]}, só intervalos observados: mín./mediana/média",
+            )
+        )
+    rows += [
         ("n_buckets_no_data", int(no_data.sum()), "intervalos sem nenhuma amostra"),
+        (
+            "n_buckets_low_coverage",
+            int(low_coverage.sum()),
+            "intervalos com amostras, mas cobertura abaixo de min_coverage (viram lacuna)",
+        ),
         (
             "n_buckets_filled",
             int(series["filled"].sum()),
-            "intervalos preenchidos por interpolação",
+            "intervalos preenchidos (interpolação linear ou preenchimento sazonal)",
+        ),
+        (
+            "n_buckets_filled_seasonal",
+            n_seasonal,
+            "intervalos preenchidos pelo método sazonal (lacunas longas)",
         ),
         (
             "n_gaps_above_max_fill",
             len(big_runs),
-            f"lacunas contíguas maiores que max_fill_gap = {max_fill_gap} (ficaram NaN)",
+            f"lacunas contíguas maiores que max_fill_gap = {max_fill_gap}",
         ),
         (
             "gaps_above_max_fill_detail",
-            "; ".join(f"t={s} ({n} intervalos)" for s, n in big_runs) or "nenhuma",
-            "posição e tamanho das lacunas não preenchidas",
+            "; ".join(
+                f"t={s}..{s + n - 1} ({n} intervalos, "
+                f"{'preenchida' if (s, n) in seasonal_runs else 'NaN'})"
+                for s, n in big_runs
+            )
+            or "nenhuma",
+            "posição, tamanho e tratamento das lacunas longas",
         ),
         ("n_nan_demand_cpu", int(series["demand_cpu"].isna().sum()), "NaN restantes em demand_cpu"),
         (
@@ -211,9 +240,10 @@ def collect_metrics(cfg: dict[str, Any]) -> pd.DataFrame:
         ),
     ]
 
+    # Estatísticas descritivas só dos intervalos observados: os preenchidos são estimativas.
     for col in ("demand_cpu", "demand_mem"):
-        s = series[col].dropna()
-        unit = "máquinas equivalentes"
+        s = observed[col].dropna()
+        unit = "máquinas equivalentes, intervalos observados"
         rows += [
             (f"{col}_min", round(float(s.min()), 3), f"mínimo de {col} ({unit})"),
             (f"{col}_mean", round(float(s.mean()), 3), f"média de {col} ({unit})"),
@@ -257,22 +287,38 @@ def write_quality_report(cfg: dict[str, Any]) -> Path:
         "",
         "## Cobertura e lacunas",
         "",
-        f"- Cobertura mediana: {_pt(round(float(value('coverage_median')), 4))}; "
+        f"- Cobertura dos intervalos observados (não preenchidos): mediana "
+        f"{_pt(round(float(value('coverage_median')), 4))}; "
         f"mínima: {_pt(round(float(value('coverage_min')), 4))}.",
+        "- Cobertura por *split* (mín./mediana/média, só intervalos observados): "
+        + "; ".join(
+            f"{label} {value(f'coverage_{name}_min_median_mean').replace('.', ',')}"
+            for name, label in SPLIT_LABELS.items()
+        )
+        + ".",
         f"- Intervalos com cobertura < 100%: "
         f"{_pt(round(float(value('frac_buckets_coverage_below_1')) * int(value('n_intervals'))))}"
         f" de {_pt(value('n_intervals'))}.",
         f"- Regra em vigor: `min_coverage = {value('min_coverage')}` (intervalos com cobertura "
         f"abaixo disso viram lacuna), `trim_leading_missing = "
-        f"{str(value('trim_leading_missing')).lower()}` e `max_fill_gap = "
-        f"{cfg['data']['max_fill_gap']}`.",
-        f"- Intervalos sem nenhuma amostra: {_pt(value('n_buckets_no_data'))}; "
-        f"preenchidos por interpolação: {_pt(value('n_buckets_filled'))}.",
-        f"- Lacunas maiores que `max_fill_gap`: {value('n_gaps_above_max_fill')} "
-        f"({value('gaps_above_max_fill_detail')}).",
+        f"{str(value('trim_leading_missing')).lower()}`, `max_fill_gap = "
+        f"{cfg['data']['max_fill_gap']}` (lacunas curtas: interpolação linear) e "
+        f'`long_gap_fill = "{value("long_gap_fill")}"` (lacunas longas).',
+        f"- Intervalos sem nenhuma amostra: {_pt(value('n_buckets_no_data'))}; com amostras, "
+        f"mas abaixo de `min_coverage`: {_pt(value('n_buckets_low_coverage'))}; preenchidos: "
+        f"{_pt(value('n_buckets_filled'))}, dos quais "
+        f"{_pt(value('n_buckets_filled_seasonal'))} pelo método sazonal.",
+        f"- Lacunas maiores que `max_fill_gap`: {value('n_gaps_above_max_fill')} — "
+        f"{value('gaps_above_max_fill_detail')}.",
+        "- Método sazonal: cada intervalo da lacuna recebe a demanda do mesmo horário do dia "
+        f"anterior (`s = {cfg['forecast']['season_period']}` intervalos antes), somada a uma "
+        "correção que varia linearmente entre a diferença observada na borda esquerda e a "
+        "observada na borda direita. Toda lacuna preenchida assim fica no treino (conferido em "
+        "`make data`), de modo que nenhuma previsão da validação ou do teste usa dado posterior "
+        "à sua origem.",
         "",
         "As estatísticas por máquina abaixo são do **rastro completo** "
-        f"({_pt(value('n_buckets_trace'))} intervalos), antes do corte:",
+        f"({_pt(value('n_buckets_trace'))} intervalos), independentemente de qualquer corte:",
         "",
         f"- Mediana de intervalos com dado por máquina: "
         f"{_pt(value('median_buckets_per_machine'))} de {_pt(value('n_buckets_trace'))}.",
@@ -292,6 +338,8 @@ def write_quality_report(cfg: dict[str, Any]) -> Path:
         "",
         "## Demanda (em máquinas equivalentes totalmente utilizadas)",
         "",
+        "Só intervalos observados; os preenchidos ficam de fora das estatísticas.",
+        "",
         "| Série | mín. | média | mediana | p95 | máx. |",
         "|---|---|---|---|---|---|",
     ]
@@ -307,6 +355,12 @@ def write_quality_report(cfg: dict[str, Any]) -> Path:
         "",
         "- **Demanda censurada:** a utilização por máquina tem teto de 100%, então em momentos",
         "  de saturação a demanda observada subestima a demanda real.",
+        "- **Cobertura desigual:** onde a cobertura é menor, a demanda é a média das máquinas que",
+        "  reportaram vezes N, isto é, uma extrapolação que supõe que as ausentes se comportam",
+        "  como as presentes.",
+        f"- **Intervalos preenchidos:** {_pt(value('n_buckets_filled'))} intervalos são "
+        "estimativas, não medições;",
+        "  entram no ajuste dos previsores, mas não nas métricas de previsão nem de alocação.",
         f"- A série cobre {_pt(value('duration_days'))} dias, o que deixa o conjunto de teste",
         "  pequeno (limitação aceita no v0).",
         "",
