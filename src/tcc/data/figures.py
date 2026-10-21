@@ -37,10 +37,55 @@ def _days(series: pd.DataFrame) -> np.ndarray:
     return series["bucket_start"].to_numpy() / 86400.0
 
 
-def plot_series_full(series: pd.DataFrame, splits: dict[str, slice], out: Path) -> None:
-    """Série completa de `demand_cpu`, com as três divisões marcadas."""
-    fig, ax = plt.subplots(figsize=(11, 4))
-    ax.plot(_days(series), series["demand_cpu"], lw=0.7, color="#1f77b4")
+def plot_series_full(
+    series: pd.DataFrame, splits: dict[str, slice], out: Path, min_coverage: float = 0.0
+) -> None:
+    """Série completa de `demand_cpu`, com as três divisões marcadas.
+
+    Os intervalos preenchidos aparecem tracejados, e um painel abaixo mostra a cobertura, para
+    que o trecho de demanda extrapolada (cobertura menor) fique visível.
+    """
+    fig, (ax, ax_cov) = plt.subplots(
+        2, 1, figsize=(11, 5.2), sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+    )
+    days = _days(series)
+    filled = series["filled"].to_numpy(dtype=bool)
+    # Cada trecho só aparece no próprio traço; o ponto observado vizinho de um trecho
+    # preenchido entra nos dois, para que a linha não tenha buracos.
+    near_filled = filled | np.roll(filled, 1) | np.roll(filled, -1)
+    ax.plot(
+        days,
+        series["demand_cpu"].where(~filled),
+        lw=0.7,
+        color="#1f77b4",
+        label="observada",
+    )
+    if filled.any():
+        ax.plot(
+            days,
+            series["demand_cpu"].where(near_filled),
+            lw=0.9,
+            color="0.15",
+            ls=(0, (3, 1.5)),
+            label=f"preenchida ({filled.sum()} intervalos sem dado suficiente)",
+        )
+        ax.legend(loc="upper left", fontsize=8, frameon=False)
+
+    ax_cov.plot(days, series["coverage"], lw=0.8, color="#1f77b4")
+    if min_coverage > 0:
+        ax_cov.axhline(min_coverage, color="0.4", lw=0.8, ls=":")
+        ax_cov.text(
+            days[-1],
+            min_coverage,
+            " mín. aceito = " + f"{min_coverage:g}".replace(".", ","),
+            ha="right",
+            va="bottom",
+            fontsize=8,
+            color="0.3",
+        )
+    ax_cov.set_ylim(0, 1.05)
+    ax_cov.set_ylabel("cobertura", fontsize=9)
+    ax_cov.set_xlabel("tempo (dias desde o início do rastro)")
 
     colors = {"train": "#2ca02c", "val": "#ff7f0e", "test": "#d62728"}
     for name, sl in splits.items():
@@ -63,15 +108,21 @@ def plot_series_full(series: pd.DataFrame, splits: dict[str, slice], out: Path) 
             color=colors[name],
         )
         if start > 0:
-            ax.axvline(series["bucket_start"].iloc[start] / 86400.0, color="0.4", lw=0.8, ls="--")
+            for axis in (ax, ax_cov):
+                axis.axvline(
+                    series["bucket_start"].iloc[start] / 86400.0, color="0.4", lw=0.8, ls="--"
+                )
 
-    ax.set_xlabel("tempo (dias desde o início do rastro)")
     ax.set_ylabel("demanda $d_t$ (máquinas equivalentes)")
     ax.set_title(
-        "Demanda de CPU do cluster em intervalos de 5 min, com a divisão cronológica",
+        "Demanda de CPU do cluster em intervalos de 5 min, com a divisão cronológica, "
+        "e fração das máquinas que reportaram",
         fontsize=11,
     )
     ax.margins(x=0.01)
+    # Folga no topo para a legenda e os rótulos das divisões não cobrirem os picos diários.
+    bottom, top = ax.get_ylim()
+    ax.set_ylim(bottom, top + 0.12 * (top - bottom))
     fig.tight_layout()
     fig.savefig(out, dpi=DPI)
     plt.close(fig)
@@ -165,9 +216,13 @@ def make_figures(cfg: dict[str, Any]) -> list[Path]:
         out_dir / "acf_cpu.png",
         out_dir / "cpu_vs_mem.png",
     ]
-    plot_series_full(series, splits, paths[0])
+    plot_series_full(series, splits, paths[0], float(cfg["data"].get("min_coverage", 0.0)))
     plot_series_day(series, interval, paths[1])
-    plot_acf_cpu(train, int(cfg["forecast"]["season_period"]), paths[2])
-    r = plot_cpu_vs_mem(train, paths[3])
+    # A autocorrelação e a correlação descrevem os dados: os intervalos preenchidos, que são
+    # estimativas, ficam de fora (NaN), e o `acf` os ignora com `missing="conservative"`.
+    observed_train = train.copy()
+    observed_train.loc[train["filled"], ["demand_cpu", "demand_mem"]] = np.nan
+    plot_acf_cpu(observed_train, int(cfg["forecast"]["season_period"]), paths[2])
+    r = plot_cpu_vs_mem(observed_train, paths[3])
     print(f"[dados] figuras em {out_dir} (correlação CPU x memória no treino: r = {r:.3f})")
     return paths
