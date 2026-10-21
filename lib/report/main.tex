@@ -24,7 +24,13 @@
 \usepackage{amssymb}
 
 \usepackage[alf,bibjustif,abnt-emphasize=bf]{abntex2cite}
-%\usepackage{tikz}
+\makeatletter
+\let\puc@cfgyear\year
+\let\year\puc@primyear
+\usepackage{tikz}
+\let\year\puc@cfgyear
+\makeatother 
+
 %\usepackage[linesnumbered, ruled, vlined]{algorithm2e}
 %\usepackage{pgfplots,pgfplotstable}
 %\usepackage{array} 
@@ -34,7 +40,7 @@
 \npdecimalsign{,}
 
 %% ThesisPUC option
-\tablesmode{tab}        %% listas de figuras e de tabelas [nada, fig, tab ou figtab]
+\tablesmode{figtab}        %% listas de figuras e de tabelas [nada, fig, tab ou figtab]
 \algorithmsmode{none}      %% lista de algoritmos [none ou use]
 \codesmode{none}           %% lista de códigos [none ou use]
 \abreviationsmode{none}    %% lista de abreviaturas [none ou use]

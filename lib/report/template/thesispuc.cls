@@ -698,7 +698,7 @@
 \newcommand{\puc@coadvisorR}{}
 \newcommand{\coadvisorR}[1]{\renewcommand{\puc@coadvisorR}{#1}}
 
-\newcommand{\puc@course}{Engenharia da Computação}
+\newcommand{\puc@course}{Engenharia de Computação}
 \newcommand{\curso}[1]{\renewcommand{\puc@course}{#1}}
 \newcommand{\puc@degree}{Engenheiro de Computação}
 \newcommand{\titulacao}[1]{\renewcommand{\puc@degree}{#1}}
