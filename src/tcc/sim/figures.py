@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from matplotlib.ticker import FuncFormatter  # noqa: E402
+from matplotlib.transforms import ScaledTranslation  # noqa: E402
 
 DPI = 200
 #: (rótulo em português, cor, marcador, estilo de linha)
@@ -181,6 +182,8 @@ def plot_rmse_vs_cost(
 
     fig, ax = plt.subplots(figsize=(7.5, 5))
     fills = {0: "full", 1: "none"}
+    # O "x" de V > ε fica ao lado do ponto, para não sumir sobre os marcadores vermelhos.
+    beside = ax.transData + ScaledTranslation(10 / 72, 0, fig.dpi_scale_trans)
     epsilons = sorted(predictive["epsilon"].unique())
     for i, epsilon in enumerate(epsilons):
         rows = predictive[(predictive["epsilon"] == epsilon) & (predictive["C_norm_test"] != "n/a")]
@@ -196,6 +199,16 @@ def plot_rmse_vs_cost(
                 fillstyle=fills[i % 2],
                 mew=1.5,
             )
+            if float(row["V_test"]) > epsilon:
+                ax.plot(
+                    rmse[row["forecaster"]],
+                    float(row["C_norm_test"]),
+                    marker="x",
+                    color="#d62728",
+                    ms=7,
+                    mew=1.6,
+                    transform=beside,
+                )
     # legenda em vez de rótulos de texto, que se sobrepõem quando os pontos coincidem
     for forecaster in dict.fromkeys(predictive["forecaster"]):
         label, color, marker, _ = STYLES[forecaster]
@@ -211,6 +224,9 @@ def plot_rmse_vs_cost(
             fillstyle=fills[i % 2],
             label=f"ponto de operação ε = {100 * epsilon:g}%",
         )
+    violated = pd.to_numeric(predictive["V_test"], errors="coerce") > predictive["epsilon"]
+    if violated.any():
+        ax.plot([], [], marker="x", color="#d62728", ls="", mew=1.6, label="V no teste > ε")
     ax.set_xlabel(f"RMSE da previsão no teste, h = {lead_time} (máquinas equivalentes)")
     ax.set_ylabel("$C_{norm}$ no teste, no ponto de operação")
     ax.set_title("Menor erro de previsão leva a menor custo?", fontsize=11)
