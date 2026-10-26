@@ -4,20 +4,16 @@
 \section{Motivação}
 \label{sec:motivacao}
 
-A computação em nuvem consolidou-se como a principal forma de disponibilizar infraestrutura computacional para empresas e instituições. Nesse modelo, o provedor mantém grandes centros de dados e precisa decidir, de forma contínua, quanto de processamento, memória e armazenamento deve estar disponível para atender à demanda de seus clientes. Como a demanda tende a crescer, impulsionada sobretudo por aplicações de Inteligência Artificial e de análise de grandes volumes de dados, a gestão eficiente desses recursos tornou-se um fator central para a sustentabilidade econômica dos provedores \cite{rossi2023forecasting}.
+A computação em nuvem consolidou-se como a principal forma de disponibilizar infraestrutura computacional. O provedor mantém grandes centros de dados e precisa decidir, de forma contínua, quanto de processamento, memória e armazenamento deixar disponível, e, com a demanda crescente, impulsionada por aplicações de Inteligência Artificial e de análise de dados, a gestão eficiente desses recursos tornou-se central para a sustentabilidade econômica dos provedores \cite{rossi2023forecasting}.
 
-A dificuldade está no fato de que a carga de trabalho não é constante. Ela apresenta picos, padrões periódicos e variações aparentemente aleatórias. Diante disso, a abordagem mais comum é a alocação reativa, na qual o sistema ajusta os recursos apenas depois de observar uma mudança na demanda, normalmente por meio de regras de limiar sobre a utilização. Como a reação ocorre com atraso, esse tipo de estratégia tende a degradar o desempenho durante os picos e a desperdiçar recursos nos períodos de baixa utilização \cite{bodra2025ml}.
+A carga de trabalho, porém, não é constante: apresenta picos, padrões periódicos e variações aparentemente aleatórias. A abordagem mais comum é a alocação reativa, que ajusta os recursos depois de observar uma mudança na demanda, normalmente por regras de limiar sobre a utilização; como a reação chega atrasada, ela tende a degradar o desempenho nos picos e a desperdiçar recursos nos períodos de baixa \cite{bodra2025ml}. Manter recursos em excesso (superprovisionamento) garante a qualidade do serviço, mas eleva o custo; manter recursos de menos (subprovisionamento) reduz o custo, mas provoca violações dos Acordos de Nível de Serviço (\textit{Service Level Agreements}, SLA) firmados com os clientes.
 
-Esse cenário cria um dilema permanente. Manter recursos em excesso (superprovisionamento) garante a qualidade do serviço, mas eleva o custo operacional. Manter recursos de menos (subprovisionamento) reduz o custo, mas provoca violações dos Acordos de Nível de Serviço (\textit{Service Level Agreements}, SLA) firmados com os clientes. Uma alternativa é a alocação preditiva, que utiliza o histórico de uso para antecipar a demanda futura e provisionar recursos antes que eles sejam necessários \cite{bodra2025ml}. Nesse contexto, prever a carga com precisão passa a ser uma pré-condição para otimizar a alocação \cite{rossi2023forecasting}.
-
-A previsão de carga em nuvem foi tradicionalmente tratada com modelos estatísticos lineares, como o modelo autorregressivo integrado de médias móveis (ARIMA) \cite{calheiros2015arima}. Mais recentemente, redes neurais profundas, em especial as arquiteturas recorrentes, passaram a ser aplicadas ao problema com bons resultados, inclusive em abordagens multivariadas que consideram simultaneamente o uso de processador e de memória \cite{xu2022esdnn}.
+A alocação preditiva usa o histórico de uso para antecipar a demanda e provisionar recursos antes que sejam necessários \cite{bodra2025ml}, o que faz da previsão de carga uma pré-condição para otimizar a alocação \cite{rossi2023forecasting}. Essa previsão foi tradicionalmente tratada com modelos estatísticos lineares, como o modelo autorregressivo integrado de médias móveis (ARIMA) \cite{calheiros2015arima}, e, mais recentemente, com redes neurais recorrentes, inclusive em abordagens que consideram processador e memória simultaneamente \cite{xu2022esdnn}.
 
 \section{Definição do problema}
 \label{sec:definicao-problema}
 
-O problema tratado neste trabalho tem duas partes encadeadas. A primeira é um problema de previsão: dado o histórico de utilização de recursos de um \textit{cluster}, amostrado em intervalos regulares, estimar a demanda de processador e de memória em um horizonte curto. A segunda é um problema de decisão: a partir dessa estimativa, determinar quantas instâncias de recursos (máquinas virtuais ou contêineres) devem permanecer ativas em cada intervalo.
-
-De forma preliminar, a decisão pode ser formulada como a minimização do custo operacional sujeita a uma restrição de qualidade de serviço:
+O problema tem duas partes encadeadas. A primeira é de previsão: dado o histórico de utilização de um \textit{cluster}, amostrado em intervalos regulares, estimar a demanda de processador e de memória em um horizonte curto. A segunda é de decisão: a partir dessa estimativa, determinar quantas instâncias (máquinas virtuais ou contêineres) manter ativas em cada intervalo, o que pode ser formulado como a minimização do custo operacional sujeita a uma restrição de qualidade de serviço:
 
 \begin{equation}
 \label{eq:problema}
@@ -26,7 +22,7 @@ De forma preliminar, a decisão pode ser formulada como a minimização do custo
 \frac{1}{T} \sum_{t=1}^{T} \mathbf{1}\left[\, d_t > k \cdot n_t \,\right] \leq \varepsilon,
 \end{equation}
 
-\noindent em que $n_t$ é o número de instâncias ativas no intervalo $t$, $c$ é o custo de uma instância por intervalo, $k$ é a capacidade de uma instância, $d_t$ é a demanda real observada, $\mathbf{1}[\cdot]$ é a função indicadora e $\varepsilon$ é a fração máxima de intervalos com violação de SLA tolerada. Como $d_t$ não é conhecida no momento da decisão, a escolha de $n_t$ depende da previsão $\hat{d}_t$, e a qualidade dessa previsão afeta diretamente o custo e o número de violações. Essa formulação é refinada no Capítulo~\ref{cap:objetivos}, que define como a restrição é verificada na prática (Equação~\ref{eq:calibracao}).
+\noindent em que $n_t$ é o número de instâncias ativas no intervalo $t$, $c$ é o custo de uma instância por intervalo, $k$ é a capacidade de uma instância, $d_t$ é a demanda real, $\mathbf{1}[\cdot]$ é a função indicadora e $\varepsilon$ é a fração máxima tolerada de intervalos com violação de SLA. Como a decisão é tomada com antecedência $L$ (Seção~\ref{subsec:provisionamento}), antes de $d_t$ ser conhecida, ela depende de uma previsão, e a Equação~\ref{eq:calibracao} define como a restrição é verificada na prática.
 
 \section{Justificativa}
 \label{sec:justificativa}
@@ -43,4 +39,4 @@ A relevância do problema é econômica e operacional. Cada ponto percentual de 
 \section{Organização do documento}
 \label{sec:organizacao}
 
-O restante deste documento está organizado da seguinte forma. O Capítulo~\ref{cap:situacao-atual} apresenta a terminologia básica e as principais abordagens existentes para previsão de carga e alocação de recursos em nuvem, com suas limitações, além das tecnologias utilizadas. O Capítulo~\ref{cap:objetivos} descreve a solução proposta, seus objetivos específicos e o que será efetivamente implementado. O Capítulo~\ref{cap:plano-acao} revisa o plano de ação, comparando as atividades previstas com as realizadas, e apresenta os resultados preliminares do protótipo. Por fim, o Capítulo~\ref{cap:cronogramas} apresenta os cronogramas do Projeto Final I (PF~I) e do Projeto Final II (PF~II).
+O Capítulo~\ref{cap:situacao-atual} apresenta os conceitos, as abordagens existentes e as tecnologias utilizadas; o Capítulo~\ref{cap:objetivos}, a solução proposta e os objetivos; o Capítulo~\ref{cap:plano-acao}, a revisão do plano de ação e os resultados preliminares; e o Capítulo~\ref{cap:cronogramas}, os cronogramas do Projeto Final I (PF~I) e do Projeto Final II (PF~II).

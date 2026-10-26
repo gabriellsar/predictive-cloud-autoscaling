@@ -1,12 +1,17 @@
 \chapter{Objetivos do trabalho}
 \label{cap:objetivos}
 
-Este capítulo descreve a solução proposta para a lacuna identificada na Seção~\ref{sec:lacuna}, os objetivos que a orientam, o escopo e o público do sistema, e os itens que serão apresentados à banca ao final do Projeto Final II.
+%% Rótulo de um objetivo específico dentro da Tabela de objetivos: \oelabel{OE1}{oe:dados}.
+\makeatletter
+\newcommand{\oelabel}[2]{\textbf{#1}\def\@currentlabel{#1}\label{#2}}
+\makeatother
+
+Este capítulo descreve a solução proposta para a lacuna da Seção~\ref{sec:lacuna}, os objetivos, o escopo e o público do sistema e os itens a apresentar à banca.
 
 \section{Solução proposta}
 \label{sec:solucao}
 
-A solução proposta é um arcabouço de alocação preditiva de recursos em nuvem construído para responder a uma pergunta: quanto custo operacional uma previsão de carga melhor permite economizar, para um mesmo nível de serviço. O arcabouço segue a abordagem desacoplada da Seção~\ref{subsec:alocacao-preditiva}, em que previsão e decisão de alocação são etapas separadas, e é organizado nos quatro componentes da Figura~\ref{fig:arquitetura}.
+A solução proposta é um arcabouço de alocação preditiva construído para responder quanto custo operacional uma previsão de carga melhor permite economizar, para um mesmo nível de serviço. Ele segue a abordagem desacoplada da Seção~\ref{subsec:alocacao-preditiva}, com os quatro componentes da Figura~\ref{fig:arquitetura}.
 
 \begin{figure}[htbp]
 \centering
@@ -37,9 +42,9 @@ A solução proposta é um arcabouço de alocação preditiva de recursos em nuv
 
 \textbf{\textit{Pipeline} de dados.} Converte um rastro público de \textit{cluster} em séries de demanda de processador e de memória com intervalos de cinco minutos, expressas em máquinas equivalentes totalmente utilizadas.
 
-\textbf{Previsores.} Cinco métodos tradicionais (ingênuo, média móvel, sazonal ingênuo, Holt-Winters e ARIMA; Seção~\ref{subsec:estatisticos}) e uma GRU que, a partir das últimas seis horas, prevê todos os horizontes de uma só vez (estratégia direta; Seção~\ref{subsec:recorrentes}). No Projeto Final I, a GRU é univariada e usa apenas a demanda de processador (Seção~\ref{sec:escopo-sistema}). Todos os previsores compartilham uma interface que só dá acesso ao histórico até a origem $\tau$ da previsão.
+\textbf{Previsores.} Os cinco métodos tradicionais da Seção~\ref{subsec:estatisticos} e uma GRU que, a partir das últimas seis horas, prevê todos os horizontes de uma vez (estratégia direta), com uma interface comum que só dá acesso ao histórico até a origem $\tau$. A parada antecipada (\textit{early stopping}) da GRU usa o fim do treino, e não a validação, que serve apenas à escolha dos parâmetros das políticas.
 
-\textbf{Política de alocação.} Aplica uma margem de segurança $m$ sobre a demanda prevista com horizonte $h = L$ (Equação~\ref{eq:alocacao-margem}). Como referências, há uma política reativa no estilo do HPA do Kubernetes (Equação~\ref{eq:hpa}) \cite{kubernetes2024hpa}, o dimensionamento estático, que mantém fixo o número de instâncias necessário no pico do treino, e o oráculo da Seção~\ref{subsec:metricas}, que conhece a demanda futura.
+\textbf{Política de alocação.} Aplica a margem $m$ sobre a demanda prevista com $h = L$ (Equação~\ref{eq:alocacao-margem}). As referências são a política reativa do HPA (Equação~\ref{eq:hpa}), o dimensionamento estático, com o número de instâncias necessário no pico do treino, e o oráculo (Seção~\ref{subsec:metricas}).
 
 O parâmetro de cada política é escolhido no conjunto de validação e avaliado no conjunto de teste. Para um limite de violações $\varepsilon$, a margem escolhida é a de menor custo, na grade da Tabela~\ref{tab:parametros}, entre as que cumprem o limite na validação:
 
@@ -52,7 +57,7 @@ V_{\mathrm{val}}(m) \leq \varepsilon,
 
 \noindent em que $C_{\mathrm{val}}$ e $V_{\mathrm{val}}$ são o custo e a fração de intervalos com violação na validação. O \textbf{ponto de operação} de um previsor para o limite $\varepsilon$ é a política preditiva com a margem $m^{*}(\varepsilon)$, medida no teste. Na política reativa, a escolha é a mesma, com a utilização-alvo $u^{*}$ no lugar de $m$; o dimensionamento estático e o oráculo são usados sem margem. Se nenhum valor da grade cumpre o limite na validação, a política não tem ponto de operação para aquele $\varepsilon$. Essa é a versão operacional da Equação~\ref{eq:problema}: como a restrição é verificada na validação, o teste nunca participa da escolha, e o ponto de operação pode ultrapassar $\varepsilon$ no teste.
 
-\textbf{Simulador e métricas.} Reproduz, intervalo a intervalo, um centro de dados com instâncias homogêneas, em que a decisão tomada na origem $\tau$ só vale no intervalo $\tau + L$, e contabiliza as métricas da Seção~\ref{subsec:metricas}. No Projeto Final I, esse papel é cumprido por um protótipo em Python; no Projeto Final II, pelo CloudSim Plus \cite{silvafilho2017cloudsimplus}, que recebe por arquivo as previsões geradas em Python, sem ponte entre as linguagens em tempo de execução (Seção~\ref{sec:tecnologias}).
+\textbf{Simulador e métricas.} Reproduz, intervalo a intervalo, um centro de dados com instâncias homogêneas, em que a decisão tomada em $\tau$ vale em $\tau + L$, e calcula as métricas da Seção~\ref{subsec:metricas}. No Projeto Final I, é um protótipo em Python; no Projeto Final II, o CloudSim Plus \cite{silvafilho2017cloudsimplus}, que recebe por arquivo as previsões geradas em Python.
 
 A decisão metodológica central é manter a política de alocação \textbf{fixa} e variar apenas o previsor. Assim, qualquer diferença de custo ou de violações entre duas configurações pode ser atribuída à previsão, e não à regra de decisão.
 
@@ -62,118 +67,118 @@ A decisão metodológica central é manter a política de alocação \textbf{fix
 \subsection{Objetivo geral}
 \label{subsec:objetivo-geral}
 
-Avaliar, em um centro de dados simulado alimentado por rastros públicos de \textit{clusters} reais, a redução de custo operacional obtida pela alocação preditiva guiada por uma rede neural recorrente, em comparação com métodos tradicionais de previsão submetidos à mesma política e com uma política reativa, para limites fixos de violação de SLA.
+Avaliar, em um centro de dados simulado alimentado por rastros públicos, a redução de custo obtida pela alocação guiada por uma rede neural recorrente, em comparação com métodos tradicionais sob a mesma política e com uma política reativa, para limites fixos de violação de SLA.
 
 \subsection{Questões de pesquisa}
 \label{subsec:questoes}
 
-O objetivo geral se desdobra em quatro questões de pesquisa (QP):
+O objetivo geral se desdobra nas quatro questões de pesquisa (QP) da Tabela~\ref{tab:questoes}.
 
-\begin{description}[leftmargin=1.2cm, style=nextline]
-    \item[QP1] Para um mesmo limite de violações $\varepsilon$, a alocação guiada pela rede neural tem custo menor do que a guiada pelos métodos tradicionais? De quanto é a diferença?
-    \item[QP2] Um previsor com menor erro (RMSE, MAE) leva necessariamente a uma alocação mais barata no ponto de operação?
-    \item[QP3] Qual é o ganho da alocação preditiva em relação à reativa, e como ele varia com a antecedência da decisão $L$?
-    \item[QP4] As conclusões obtidas no rastro da Alibaba se mantêm no rastro do Google?
-\end{description}
+\begin{table}[htbp]
+\centering
+\caption{Questões de pesquisa.}
+\label{tab:questoes}
+\footnotesize
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.9cm} >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{QP} & \textbf{Questão} \\
+\midrule
+\textbf{QP1} & Para um mesmo limite de violações $\varepsilon$, a alocação guiada pela rede neural tem custo menor do que a guiada pelos métodos tradicionais? De quanto é a diferença? \\
+\textbf{QP2} & Um previsor com menor erro (RMSE, MAE) leva necessariamente a uma alocação mais barata no ponto de operação? \\
+\textbf{QP3} & Qual é o ganho da alocação preditiva em relação à reativa, e como ele varia com a antecedência da decisão $L$? \\
+\textbf{QP4} & As conclusões obtidas no rastro da Alibaba se mantêm no rastro do Google? \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \subsection{Objetivos específicos}
 \label{subsec:objetivos-especificos}
 
-Para responder a essas questões, o trabalho tem os seguintes objetivos específicos (OE):
+A Tabela~\ref{tab:objetivos} lista os objetivos específicos (OE), as questões de pesquisa a que respondem e a situação de cada um ao fim do Projeto Final I.
 
-\begin{enumerate}[label=\textbf{OE\arabic*}, ref=OE\arabic*, leftmargin=1.4cm]
-    \item\label{oe:dados} \textbf{Dados:} agregar o Alibaba Cluster Trace de 2018 \cite{alibaba2018trace} em séries de cinco minutos, com tratamento de lacunas, divisão cronológica e relatório de qualidade.
-    \item\label{oe:previsores} \textbf{Previsores:} implementar os seis previsores e avaliá-los por MAE, RMSE, MAPE, viés e taxa de subestimação em cada horizonte.
-    \item\label{oe:simulador} \textbf{Simulador e políticas:} implementar o protótipo do simulador e as políticas da Seção~\ref{sec:solucao} (Equação~\ref{eq:alocacao-margem}), validados por testes automatizados.
-    \item\label{oe:cloudsim} \textbf{Simulação no CloudSim Plus:} reproduzir no CloudSim Plus \cite{silvafilho2017cloudsimplus} as políticas e as métricas do protótipo, recebendo por arquivo as previsões geradas em Python, e usá-lo na avaliação final.
-    \item\label{oe:custo} \textbf{Custo e violações (QP1, QP3):} obter os pontos de operação para $\varepsilon = 1\%$ e $5\%$ (Equação~\ref{eq:calibracao}) e as curvas de custo contra violações.
-    \item\label{oe:erro} \textbf{Erro e custo (QP2):} confrontar o erro da previsão de horizonte $h = L$ com o custo no ponto de operação.
-    \item\label{oe:sensibilidade} \textbf{Sensibilidade (QP3):} medir o efeito da antecedência da decisão $L$ sobre os pontos de operação.
-    \item\label{oe:robustez} \textbf{Robustez:} repetir o treinamento da GRU com várias sementes e avaliar em várias janelas de teste, reportando média e dispersão.
-    \item\label{oe:replicacao} \textbf{Replicação (QP4):} aplicar o mesmo protocolo ao Google Cluster Trace de 2019 \cite{wilkes2020google}, alterando apenas a leitura dos dados.
-    \item\label{oe:reprodutibilidade} \textbf{Reprodutibilidade:} manter código e configurações em repositório público \cite{rosas2026repo}, regenerando todas as tabelas e figuras com um único comando.
-\end{enumerate}
+\begin{table}[htbp]
+\centering
+\caption{Objetivos específicos, questões de pesquisa associadas e situação ao fim do Projeto Final I.}
+\label{tab:objetivos}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.9cm} >{\raggedright\arraybackslash}X >{\centering\arraybackslash}p{1.3cm} >{\raggedright\arraybackslash}p{3.0cm}}
+\toprule
+\textbf{OE} & \textbf{Descrição} & \textbf{QP} & \textbf{Situação no PF~I} \\
+\midrule
+\oelabel{OE1}{oe:dados} & \textbf{Dados:} agregar o rastro da Alibaba de 2018 em séries de 5 min, com lacunas tratadas e relatório de qualidade & -- & Implementado \\
+\oelabel{OE2}{oe:previsores} & \textbf{Previsores:} implementar os seis previsores e avaliar seu erro em cada horizonte & -- & Implementado \\
+\oelabel{OE3}{oe:simulador} & \textbf{Simulador e políticas:} implementar e testar o simulador e as políticas da Seção~\ref{sec:solucao} & -- & Protótipo em Python implementado \\
+\oelabel{OE4}{oe:cloudsim} & \textbf{CloudSim Plus:} reproduzir políticas e métricas no CloudSim Plus e usá-lo na avaliação final & -- & Previsto para o PF~II \\
+\oelabel{OE5}{oe:custo} & \textbf{Custo e violações:} pontos de operação para $\varepsilon = 1\%$ e $5\%$ e curvas de custo contra violações & QP1, QP3 & Preliminar \\
+\oelabel{OE6}{oe:erro} & \textbf{Erro e custo:} confrontar o erro com $h = L$ e o custo no ponto de operação & QP2 & Preliminar \\
+\oelabel{OE7}{oe:sensibilidade} & \textbf{Sensibilidade:} efeito da antecedência $L$ sobre os pontos de operação & QP3 & Parcial ($L = 1$ e $L = 2$) \\
+\oelabel{OE8}{oe:robustez} & \textbf{Robustez:} várias sementes da GRU e várias janelas de teste, com média e dispersão & -- & Previsto para o PF~II \\
+\oelabel{OE9}{oe:replicacao} & \textbf{Replicação:} mesmo protocolo no rastro do Google de 2019, mudando só a leitura dos dados & QP4 & Previsto para o PF~II \\
+\oelabel{OE10}{oe:reprodutibilidade} & \textbf{Reprodutibilidade:} repositório público que regenera tabelas e figuras com um comando & -- & Implementado; a ser mantido \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Os resultados preliminares do Projeto Final I usam uma janela de teste e uma semente da GRU. O desenho de \ref{oe:robustez} \pendente{número e tamanho das janelas de teste na Alibaba e no Google e número de sementes da GRU} e o critério estatístico para afirmar que um previsor é melhor \pendente{critério estatístico} ainda serão definidos.
 
 \section{Escopo do sistema}
 \label{sec:escopo-sistema}
 
-O sistema é um \textbf{ambiente de simulação e avaliação}, e não um autoescalador para produção. Recebe um rastro de utilização e um arquivo de configuração e produz tabelas e figuras com as métricas de previsão e de alocação; nenhum parâmetro é fixado no código. A Tabela~\ref{tab:parametros} resume os parâmetros do protótipo construído no Projeto Final I, que serão mantidos no Projeto Final II, salvo os ajustes decorrentes de \ref{oe:sensibilidade} a \ref{oe:replicacao}.
+O sistema é um \textbf{ambiente de simulação e avaliação}, e não um autoescalador para produção: recebe um rastro e um arquivo de configuração e produz as métricas de previsão e de alocação. A Tabela~\ref{tab:parametros} resume os parâmetros do protótipo, mantidos no Projeto Final II salvo os ajustes de \ref{oe:sensibilidade} a \ref{oe:replicacao}.
 
 \begin{table}[htbp]
 \centering
-\caption{Parâmetros do protocolo experimental adotados no protótipo.}
+\caption{Parâmetros do protocolo experimental e dos previsores adotados no protótipo.}
 \label{tab:parametros}
 \footnotesize
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\centering\arraybackslash}p{1.7cm} >{\raggedright\arraybackslash}p{5.6cm}}
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.9cm} >{\centering\arraybackslash}p{1.3cm} >{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Parâmetro} & \textbf{Símbolo} & \textbf{Valor} \\
 \midrule
 Intervalo de agregação & $\Delta$ & 5 minutos \\
-Divisão cronológica (treino/validação/teste) & -- & 60\% / 20\% / 20\% \\
+Divisão treino/validação/teste & -- & 60\% / 20\% / 20\%, cronológica \\
 Horizontes de previsão avaliados & $h$ & 1, 2, 3 e 6 intervalos (5 a 30 min) \\
-Janela de entrada da GRU & $w$ & 72 intervalos (6 h) \\
-Período sazonal (sazonal ingênuo, Holt-Winters) & $s$ & 288 intervalos (1 dia) \\
-Antecedência da decisão & $L$ & 1 intervalo (sem atraso de inicialização); 2 na análise de sensibilidade \\
+Janela (média móvel; GRU) & $w$ & 6 intervalos (30 min); 72 intervalos (6 h) \\
+Período sazonal & $s$ & 288 intervalos (1 dia); Holt-Winters aditivo \\
+Ordem do ARIMA & $(p, d, q)$ & $(2, 1, 2)$, fixa; resíduos do treino sem autocorrelação até a defasagem 12 (Ljung-Box) \\
+GRU & -- & 1 camada de 32 unidades e saída linear para $h = 1$ a 6; perda MSE, Adam com taxa 0,001, lotes de 32, até 100 épocas; parada antecipada com paciência de 10 épocas nos últimos 15\% das janelas do treino; normalização pela média e pelo desvio padrão do treino \\
+Semente & -- & 42 \\
+Antecedência da decisão & $L$ & 1 intervalo; 2 na análise de sensibilidade \\
 Instâncias no pico do treino & $n_{\mathrm{pico}}$ & 50 \\
-Capacidade de uma instância & $k$ & pico da demanda no treino dividido por $n_{\mathrm{pico}}$ (60,94 máquinas equivalentes) \\
+Capacidade de uma instância & $k$ & Pico do treino dividido por $n_{\mathrm{pico}}$ (60,94 máquinas equivalentes) \\
 Custo por instância e intervalo & $c$ & 1 \\
 Número mínimo de instâncias & $n_{\min}$ & 1 \\
-Grade de margens (política preditiva) & $m$ & 0 a 0,60, com passo 0,01 \\
-Grade de utilizações-alvo (política reativa) & $u^{*}$ & 0,50 a 0,99, com passo 0,01 \\
-Tolerância e estabilização (política reativa) & -- & 10\% e 6 intervalos \\
+Grade de margens (preditiva) & $m$ & 0 a 0,60, com passo 0,01 \\
+Grade de utilizações-alvo (reativa) & $u^{*}$ & 0,50 a 0,99, com passo 0,01 \\
+Tolerância e estabilização (reativa) & -- & 10\% e 6 intervalos \\
 Limites de violação & $\varepsilon$ & 1\% e 5\% \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Valem as simplificações do Capítulo~\ref{cap:situacao-atual}: demanda agregada, capacidade em instâncias homogêneas e violação de SLA sempre que a demanda de um intervalo excede a capacidade. No protótipo do Projeto Final I, por simplicidade de escopo, a alocação considera apenas a demanda de processador, e a GRU é univariada. Essa simplificação será retirada no Projeto Final II, que também considera a memória; a forma de incorporá-la, como segundo recurso na alocação, como entrada adicional da previsão ou de ambas as formas, ainda está em definição. Os itens fora do escopo são os da Seção~\ref{sec:escopo}.
+Valem as simplificações do Capítulo~\ref{cap:situacao-atual}: demanda agregada, instâncias homogêneas e violação sempre que a demanda de um intervalo excede a capacidade. No protótipo, a alocação considera apenas o processador, e a GRU é univariada. No Projeto Final II, a memória entra de duas formas: como segundo recurso na alocação, com o número de instâncias dado pelo maior entre os necessários para processador e para memória, e como entrada adicional da GRU, nos moldes do esDNN \cite{xu2022esdnn}. Os itens fora do escopo são os da Seção~\ref{sec:escopo}.
 
 \section{Usuários e situações apoiadas}
 \label{sec:usuarios}
 
-O ambiente se destina a pesquisadores e a engenheiros responsáveis pelo planejamento de capacidade que precisam decidir se a adoção de um previsor mais complexo se paga em custo de infraestrutura. Ele apoia três situações: comparar previsores sob um mesmo limite de violações antes de levá-los à produção; estimar o custo de operar com um dado nível de serviço e atraso de inicialização; e estender a avaliação a novos previsores, políticas ou rastros, o que exige apenas implementar a interface comum do componente correspondente.
+O ambiente se destina a pesquisadores e a engenheiros de planejamento de capacidade, para comparar previsores sob um mesmo limite de violações, estimar o custo de um nível de serviço e estender a avaliação a novos previsores, políticas ou rastros.
 
 \section{Avanços em relação às soluções existentes}
 \label{sec:avancos}
 
-Em relação à lacuna da Seção~\ref{sec:lacuna}, o trabalho busca:
+Sem propor uma nova arquitetura, já que a GRU é deliberadamente simples, o trabalho busca, em relação à lacuna da Seção~\ref{sec:lacuna}:
 
 \begin{itemize}
-    \item \textbf{Comparação controlada:} previsores do ingênuo à rede neural sob a mesma política, simulador e dados.
-    \item \textbf{Custo a um mesmo nível de serviço:} com instâncias discretas e antecedência da decisão.
-    \item \textbf{Ligação entre erro e custo:} a QP2 testa se menor erro implica alocação mais barata.
+    \item \textbf{Comparação controlada:} do ingênuo à rede neural, sob a mesma política.
+    \item \textbf{Custo a um mesmo nível de serviço:} instâncias discretas e antecedência.
+    \item \textbf{Erro contra custo:} a QP2 testa se menor erro implica menor custo.
 \end{itemize}
-
-\noindent O trabalho não propõe uma nova arquitetura: a GRU é deliberadamente simples, e a contribuição está em medir o valor operacional da previsão com rastros públicos e código aberto.
 
 \section{Itens a serem implementados e apresentados à banca}
 \label{sec:entregaveis}
 
-A Tabela~\ref{tab:entregaveis} relaciona os itens a serem entregues e sua situação ao fim do Projeto Final I. O protótipo já cobre o \textit{pipeline} completo, dos dados brutos às curvas de custo contra violações; o que foi realizado, as dificuldades encontradas e os resultados preliminares são discutidos no Capítulo~\ref{cap:plano-acao}.
+Os itens a implementar são os da Tabela~\ref{tab:objetivos}, mais o relatório final e a apresentação. Na defesa, serão apresentados: (i) as curvas de custo contra violações e os pontos de operação de todos os previsores e da política reativa, nos dois rastros; (ii) a comparação entre a ordenação dos previsores por erro e por custo; (iii) a análise de sensibilidade à antecedência da decisão $L$; e (iv) a regeneração dos resultados a partir dos dados brutos pelo repositório.
 
-\begin{table}[htbp]
-\centering
-\caption{Itens a serem implementados e situação ao fim do Projeto Final I.}
-\label{tab:entregaveis}
-\footnotesize
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\centering\arraybackslash}p{1.6cm} >{\raggedright\arraybackslash}p{5.2cm}}
-\toprule
-\textbf{Item} & \textbf{Objetivo} & \textbf{Situação no PF~I} \\
-\midrule
-\textit{Pipeline} de dados & \ref{oe:dados} & Implementado \\
-Previsores & \ref{oe:previsores} & Implementado \\
-Simulador e políticas & \ref{oe:simulador} & Protótipo em Python implementado \\
-Simulação no CloudSim Plus & \ref{oe:cloudsim} & Previsto para o PF~II \\
-Experimentos de custo, violações e erro contra custo & \ref{oe:custo}, \ref{oe:erro} & Preliminar (uma semente, uma janela de teste) \\
-Análise de sensibilidade & \ref{oe:sensibilidade} & Parcial ($L = 1$ e $L = 2$) \\
-Avaliação robusta & \ref{oe:robustez} & Previsto para o PF~II \\
-Replicação no Google & \ref{oe:replicacao} & Previsto para o PF~II \\
-Repositório reprodutível & \ref{oe:reprodutibilidade} & Implementado; a ser mantido \\
-Relatório final e apresentação & -- & Previsto para o PF~II \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-Na defesa, serão apresentados: (i) as curvas de custo contra violações e os pontos de operação de todos os previsores e da política reativa, nos dois rastros; (ii) a comparação entre a ordenação dos previsores por erro e por custo; (iii) a análise de sensibilidade à antecedência da decisão $L$; e (iv) a regeneração dos resultados a partir dos dados brutos pelo repositório.
-
-Uma extensão, condicionada ao cronograma e fora do compromisso de entrega, pode ser avaliada no mesmo arcabouço: a substituição da margem fixa por um quantil previsto pela rede \cite{rossi2023forecasting, pan2023magicscaler}. A incorporação da memória, por outro lado, deixa de ser uma extensão e faz parte do Projeto Final II (Seção~\ref{sec:escopo-sistema}); a previsão multivariada nos moldes do esDNN \cite{xu2022esdnn} é uma das formas possíveis.
+Se o cronograma permitir, a margem fixa poderá ser trocada por um quantil previsto pela rede \cite{rossi2023forecasting, pan2023magicscaler}.
