@@ -1,7 +1,7 @@
 \chapter{Revisão do Plano de Ação}
 \label{cap:plano-acao}
 
-Este capítulo compara o plano do Projeto Final I com o que foi realizado (Seções~\ref{sec:plano-previsto} e~\ref{sec:atividades-realizadas}), discute as mudanças de plano e as dificuldades (Seções~\ref{sec:mudancas-plano} e~\ref{sec:dificuldades}), apresenta os resultados preliminares do protótipo (Seção~\ref{sec:resultados-preliminares}) e lista as pendências para o Projeto Final II (Seção~\ref{sec:pendencias}).
+Este capítulo compara o plano do Projeto Final I com o que foi realizado, discute as mudanças de plano e as dificuldades, apresenta os resultados preliminares do protótipo e lista as pendências para o Projeto Final II.
 
 \section{Plano previsto}
 \label{sec:plano-previsto}
@@ -72,7 +72,7 @@ Sazonal ingênuo & 360,90 & 291,42 & $-166{,}41$ & 66,9\% \\
 \end{tabular}
 \end{table}
 
-A Figura~\ref{fig:pareto} mostra as curvas de custo contra violações no teste. Cada curva varia o parâmetro de uma política, $m$ na preditiva e $u^{*}$ na reativa; as linhas verticais marcam $\varepsilon = 1\%$ e $5\%$, o eixo horizontal é linear até 1\% e logarítmico a partir daí, e, na legenda, \textit{naive} designa o método ingênuo. A Tabela~\ref{tab:pontos-operacao} traz os pontos de operação de cada política. Cinco observações se destacam.
+A Figura~\ref{fig:pareto} mostra as curvas de custo contra violações no teste. Cada curva varia o parâmetro de uma política, $m$ na preditiva e $u^{*}$ na reativa; as linhas verticais marcam $\varepsilon = 1\%$ e $5\%$, o eixo horizontal é linear até 1\% e logarítmico a partir daí, e, na legenda, \textit{naive} designa o método ingênuo. A Tabela~\ref{tab:pontos-operacao} traz os pontos de operação de cada política. Seis observações se destacam.
 
 \begin{figure}[htbp]
 \centering
@@ -83,29 +83,33 @@ A Figura~\ref{fig:pareto} mostra as curvas de custo contra violações no teste.
 
 \begin{table}[htbp]
 \centering
-\caption{Pontos de operação no teste, com $L = 1$.}
+\caption{Pontos de operação no teste, com $L = 1$ e $L = 2$.}
 \label{tab:pontos-operacao}
 \footnotesize
-\begin{tabular}{lcrrcrr}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l rrr rr @{\hspace{6pt}} rrr rr}
 \toprule
- & \multicolumn{3}{c}{$\varepsilon = 1\%$} & \multicolumn{3}{c}{$\varepsilon = 5\%$} \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7}
-\textbf{Política} & \textbf{Parâmetro} & $C_{\mathrm{norm}}$ & $V$ & \textbf{Parâmetro} & $C_{\mathrm{norm}}$ & $V$ \\
+ & \multicolumn{5}{c}{$\varepsilon = 1\%$} & \multicolumn{5}{c}{$\varepsilon = 5\%$} \\
+\cmidrule(lr){2-6} \cmidrule(lr){7-11}
+ & \multicolumn{3}{c}{$L = 1$} & \multicolumn{2}{c}{$L = 2$} & \multicolumn{3}{c}{$L = 1$} & \multicolumn{2}{c}{$L = 2$} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-6} \cmidrule(lr){7-9} \cmidrule(lr){10-11}
+\textbf{Política} & \textbf{Par.} & $C_{\mathrm{norm}}$ & $V$ (\%) & $C_{\mathrm{norm}}$ & $V$ (\%) & \textbf{Par.} & $C_{\mathrm{norm}}$ & $V$ (\%) & $C_{\mathrm{norm}}$ & $V$ (\%) \\
 \midrule
-Oráculo & -- & 1,000 & 0,00\% & -- & 1,000 & 0,00\% \\
-Dimensionamento estático & -- & 1,830 & 0,22\% & -- & 1,830 & 0,22\% \\
-Reativa (HPA) & $u^{*} = 0{,}82$ & 1,340 & \textbf{1,08\%} & $u^{*} = 0{,}92$ & 1,197 & 4,98\% \\
-Preditiva com ARIMA & $m = 0{,}32$ & 1,315 & 0,87\% & $m = 0{,}18$ & 1,176 & 3,90\% \\
-Preditiva com GRU & $m = 0{,}28$ & 1,287 & 0,87\% & $m = 0{,}19$ & 1,199 & 3,25\% \\
-Preditiva com Holt-Winters & $m = 0{,}40$ & 1,391 & 0,43\% & $m = 0{,}19$ & 1,185 & 3,46\% \\
-Preditiva com ingênuo & $m = 0{,}38$ & 1,373 & 0,87\% & $m = 0{,}21$ & 1,206 & 3,46\% \\
-Preditiva com média móvel & $m = 0{,}36$ & 1,354 & 0,43\% & $m = 0{,}24$ & 1,238 & 3,90\% \\
-Preditiva com sazonal ingênuo & $m = 0{,}42$ & 1,270 & \textbf{13,64\%} & $m = 0{,}23$ & 1,103 & \textbf{33,55\%} \\
+Oráculo & -- & 1,000 & 0,00 & 1,000 & 0,00 & -- & 1,000 & 0,00 & 1,000 & 0,00 \\
+Dimensionamento estático & -- & 1,830 & 0,22 & 1,830 & 0,22 & -- & 1,830 & 0,22 & 1,830 & 0,22 \\
+Reativa (HPA) & 0,82 & 1,340 & \textbf{1,08} & 1,376 & 0,65 & 0,92 & 1,197 & 4,98 & 1,223 & 4,98 \\
+\textit{Preditiva com:} & & & & & & & & & & \\
+\quad ARIMA & 0,32 & 1,315 & 0,87 & 1,385 & 0,65 & 0,18 & 1,176 & 3,90 & 1,238 & 3,25 \\
+\quad GRU & 0,28 & 1,287 & 0,87 & 1,356 & 0,43 & 0,19 & 1,199 & 3,25 & 1,226 & 3,68 \\
+\quad Holt-Winters & 0,40 & 1,391 & 0,43 & 1,440 & 0,87 & 0,19 & 1,185 & 3,46 & 1,233 & 3,03 \\
+\quad Ingênuo & 0,38 & 1,373 & 0,87 & 1,412 & 0,65 & 0,21 & 1,206 & 3,46 & 1,275 & 3,90 \\
+\quad Média móvel & 0,36 & 1,354 & 0,43 & 1,434 & 0,43 & 0,24 & 1,238 & 3,90 & 1,238 & 3,90 \\
+\quad Sazonal ingênuo & 0,42 & 1,270 & \textbf{13,64} & 1,270 & \textbf{13,64} & 0,23 & 1,103 & \textbf{33,55} & 1,103 & \textbf{33,55} \\
 \bottomrule
 \end{tabular}
 
 \smallskip
-\parbox{\textwidth}{\footnotesize Nota: parâmetros escolhidos na validação (Equação~\ref{eq:calibracao}); valores de $V$ em negrito ultrapassam $\varepsilon$ no teste.}
+\parbox{\textwidth}{\footnotesize Nota: Par. é a margem $m$ na política preditiva e a utilização-alvo $u^{*}$ na reativa, escolhida na validação (Equação~\ref{eq:calibracao}) com $L = 1$; com $L = 2$, a escolha é refeita da mesma forma. Valores de $V$ em negrito ultrapassam $\varepsilon$ no teste.}
 \end{table}
 
 \textbf{A previsão reduz muito o custo em relação ao dimensionamento estático e pouco em relação à política reativa.} Em $\varepsilon = 5\%$, a política preditiva com o ARIMA tem $C_{\mathrm{norm}} = 1{,}176$, 35,7\% abaixo do dimensionamento estático (1,830) e 1,7\% abaixo da reativa (1,197). Em $\varepsilon = 1\%$, a GRU tem $C_{\mathrm{norm}} = 1{,}287$, 3,9\% abaixo da reativa, que ainda ultrapassa o limite no teste.
@@ -118,18 +122,20 @@ Preditiva com sazonal ingênuo & $m = 0{,}42$ & 1,270 & \textbf{13,64\%} & $m = 
 
 \textbf{A política reativa muda de tamanho com muito menos frequência.} Nos pontos de operação, ela altera o número de instâncias 116 vezes no teste, contra 326 a 411 vezes das políticas preditivas, exceto a média móvel, com 282 a 284. Como o modelo de custo não cobra pelas alterações, essa vantagem da reativa não aparece em $C$.
 
-Com $L = 2$, as violações aumentam, em média sobre a grade de parâmetros, em todas as políticas que dependem da demanda recente. O aumento é maior nas políticas preditivas com o método ingênuo (8,0 intervalos com violação a mais no teste), o Holt-Winters (7,8), o ARIMA (5,4) e a GRU (5,1) do que na reativa (4,2); a média móvel fica abaixo da reativa (3,8), e o sazonal ingênuo não muda, porque sua previsão não depende do horizonte. Por fim, três dos 16 pontos de operação que não são do oráculo ultrapassam $\varepsilon$ no teste: o da reativa em $\varepsilon = 1\%$, por um intervalo, e os dois do sazonal ingênuo, por larga margem, o que reforça a necessidade da avaliação com várias janelas de teste no Projeto Final II.
+\textbf{Com $L = 2$, a vantagem da previsão sobre a política reativa diminui.} O custo no ponto de operação sobe em todas as políticas que dependem da demanda recente (Tabela~\ref{tab:pontos-operacao}). Em $\varepsilon = 1\%$, só a GRU fica abaixo da reativa, com 1,356 contra 1,376, 1,5\% a menos; em $\varepsilon = 5\%$, a reativa, com 1,223, fica abaixo de todas as preditivas que cumprem o limite no teste, a GRU 0,2\% acima. O sazonal ingênuo não muda, porque sua previsão não depende do horizonte. Com uma única janela de teste, esse resultado ainda é preliminar.
+
+Por fim, com $L = 1$, três dos 16 pontos de operação que não são do oráculo ultrapassam $\varepsilon$ no teste: o da reativa em $\varepsilon = 1\%$, por um intervalo, e os dois do sazonal ingênuo, por larga margem, o que reforça a necessidade da avaliação com várias janelas de teste no Projeto Final II.
 
 \section{Pendências para o Projeto Final II}
 \label{sec:pendencias}
 
-Cada pendência corresponde a uma atividade da Tabela~\ref{tab:cronograma-pf2}, indicada entre parênteses:
+Cada pendência corresponde a uma atividade de mesmo nome na Tabela~\ref{tab:cronograma-pf2}:
 
 \begin{itemize}
-    \item reproduzir as políticas e as métricas no CloudSim Plus e usá-lo na avaliação final, \ref{oe:cloudsim} (Simulação no CloudSim Plus);
-    \item incorporar a memória como segundo recurso na alocação e como entrada da GRU (Incorporação da memória);
-    \item aplicar o protocolo ao rastro do Google, \ref{oe:replicacao} (Replicação no rastro do Google);
-    \item definir e executar a avaliação com várias sementes e janelas de teste e o critério estatístico de comparação, \ref{oe:robustez} (Várias sementes e janelas de teste);
-    \item refazer os experimentos de custo, violações e erro contra custo, hoje preliminares, \ref{oe:custo} e \ref{oe:erro} (Experimentos finais);
-    \item estender a análise de sensibilidade além de $L = 1$ e $L = 2$, \ref{oe:sensibilidade} (Sensibilidade à antecedência $L$).
+    \item simulação no CloudSim Plus (\ref{oe:cloudsim});
+    \item incorporação da memória, na alocação e na entrada da GRU;
+    \item replicação no rastro do Google (\ref{oe:replicacao});
+    \item várias sementes e janelas de teste, com desenho e critério estatístico a definir (\ref{oe:robustez});
+    \item experimentos finais de custo, violações e erro contra custo, hoje preliminares (\ref{oe:custo}, \ref{oe:erro});
+    \item sensibilidade à antecedência $L$, hoje restrita a $L = 1$ e $L = 2$ (\ref{oe:sensibilidade}).
 \end{itemize}
