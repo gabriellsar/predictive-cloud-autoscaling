@@ -120,16 +120,18 @@ A Tabela~\ref{tab:objetivos} lista os objetivos específicos (OE), as questões 
 \end{tabularx}
 \end{table}
 
-Os resultados preliminares do Projeto Final I usam uma janela de teste e uma semente da GRU. O desenho de \ref{oe:robustez} \pendente{número e tamanho das janelas de teste na Alibaba e no Google e número de sementes da GRU} e o critério estatístico para afirmar que um previsor é melhor \pendente{critério estatístico} ainda serão definidos.
+Os resultados preliminares do Projeto Final I usam uma janela de teste e uma semente da GRU. No Projeto Final II, cada rastro é avaliado em janelas de teste com treino expansivo e validação do mesmo tamanho do teste: três janelas de um dia (288 intervalos) na Alibaba, com teste nos dias 5, 6 e 7 e treino de 0 a 3, 0 a 4 e 0 a 5, e de três a quatro janelas de dois a três dias por célula no Google, com pelo menos 14 dias de treino. Em cada janela, $k$, os parâmetros dos previsores e a normalização usam só o treino, e o preenchimento de lacunas segue a regra da Seção~\ref{sec:mudancas-plano}. A GRU é treinada com dez sementes (42 a 51), cada uma com o ponto de operação escolhido na validação e medido no teste, e entra na comparação pela média entre sementes; os demais previsores rodam uma vez por janela.
+
+O melhor previsor em $\varepsilon$ é o de menor $C_{\mathrm{norm}}$ médio entre os que têm $V$ médio de no máximo $\varepsilon$. Afirmar que um previsor é melhor que outro exige que o intervalo de 95\% da diferença pareada de $C_{\mathrm{norm}}$, obtido por \textit{bootstrap} \cite{efron1993introduction}, exclua zero, com correção de Holm \cite{holm1979simple} nas comparações pré-especificadas; na Alibaba, com três janelas, a conclusão é apenas descritiva. O erro de previsão é comparado à parte, pelo teste de Diebold-Mariano \cite{diebold1995comparing}.
 
 \section{Escopo do sistema}
 \label{sec:escopo-sistema}
 
-O sistema é um \textbf{ambiente de simulação e avaliação}, e não um autoescalador para produção: recebe um rastro e um arquivo de configuração e produz as métricas de previsão e de alocação. A Tabela~\ref{tab:parametros} resume os parâmetros do protótipo, mantidos no Projeto Final II salvo os ajustes de \ref{oe:sensibilidade} a \ref{oe:replicacao}.
+O sistema é um \textbf{ambiente de simulação e avaliação}, e não um autoescalador para produção: recebe um rastro e um arquivo de configuração e produz as métricas de previsão e de alocação. A Tabela~\ref{tab:parametros} resume os parâmetros do protótipo, mantidos no Projeto Final II salvo os ajustes de \ref{oe:sensibilidade} a \ref{oe:replicacao}, e as janelas e sementes da Seção~\ref{subsec:objetivos-especificos}.
 
 \begin{table}[htbp]
 \centering
-\caption{Parâmetros do protocolo experimental e dos previsores adotados no protótipo.}
+\caption{Parâmetros do protocolo experimental e dos previsores.}
 \label{tab:parametros}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -138,13 +140,16 @@ O sistema é um \textbf{ambiente de simulação e avaliação}, e não um autoes
 \textbf{Parâmetro} & \textbf{Símbolo} & \textbf{Valor} \\
 \midrule
 Intervalo de agregação & $\Delta$ & 5 minutos \\
-Divisão treino/validação/teste & -- & 60\% / 20\% / 20\%, cronológica \\
+Divisão treino/validação/teste (PF~I) & -- & 60\% / 20\% / 20\%, cronológica \\
+Janelas de teste na Alibaba (PF~II) & -- & 3 de 1 dia (288 intervalos); treino expansivo; validação de 1 dia \\
+Janelas de teste no Google (PF~II) & -- & 3 a 4 de 2 a 3 dias por célula; treino expansivo de pelo menos 14 dias; validação do tamanho do teste \\
 Horizontes de previsão avaliados & $h$ & 1, 2, 3 e 6 intervalos (5 a 30 min) \\
 Janela (média móvel; GRU) & $w$ & 6 intervalos (30 min); 72 intervalos (6 h) \\
 Período sazonal & $s$ & 288 intervalos (1 dia); Holt-Winters aditivo \\
 Ordem do ARIMA & $(p, d, q)$ & $(2, 1, 2)$, fixa; resíduos do treino sem autocorrelação até a defasagem 12 (Ljung-Box) \\
 GRU & -- & 1 camada de 32 unidades e saída linear para $h = 1$ a 6; perda MSE, Adam com taxa 0,001, lotes de 32, até 100 épocas; parada antecipada com paciência de 10 épocas nos últimos 15\% das janelas do treino; normalização pela média e pelo desvio padrão do treino \\
-Semente & -- & 42 \\
+Semente da GRU (PF~I) & -- & 42 \\
+Sementes da GRU (PF~II) & -- & 10, de 42 a 51 \\
 Antecedência da decisão & $L$ & 1 intervalo; 2 na análise de sensibilidade \\
 Instâncias no pico do treino & $n_{\mathrm{pico}}$ & 50 \\
 Capacidade de uma instância & $k$ & Pico do treino dividido por $n_{\mathrm{pico}}$ (60,94 máquinas equivalentes) \\

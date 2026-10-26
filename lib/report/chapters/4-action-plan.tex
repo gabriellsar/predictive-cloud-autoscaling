@@ -6,7 +6,7 @@ Este capítulo compara o plano do Projeto Final I com o que foi realizado, discu
 \section{Plano previsto}
 \label{sec:plano-previsto}
 
-A proposta do trabalho previa avaliar a alocação preditiva com os rastros públicos da Alibaba \cite{alibaba2018trace} e do Google \cite{wilkes2020google}, em um centro de dados simulado no CloudSim Plus \cite{silvafilho2017cloudsimplus}, comparando uma rede neural com métodos tradicionais de previsão e com uma política reativa (Seção~\ref{sec:escopo}). Para o Projeto Final I, a meta foi um protótipo de ponta a ponta que servisse de evidência de viabilidade: partir do rastro bruto da Alibaba e chegar às curvas de custo contra violações, primeiro com previsores tradicionais e, na etapa seguinte, com a rede neural. A construção foi dividida em fases curtas, cada uma com uma especificação, um critério de aceite e uma duração reservada, e com pontos de verificação ao fim das fases de ambiente, dados, simulador e experimento. As fases, a duração prevista e as datas de conclusão estão na Tabela~\ref{tab:cronograma-pf1}; a entrega do protótipo estava prevista para 21/10/2026.
+A proposta do trabalho previa avaliar a alocação preditiva com os rastros públicos da Alibaba \cite{alibaba2018trace} e do Google \cite{wilkes2020google}, em um centro de dados simulado no CloudSim Plus \cite{silvafilho2017cloudsimplus}, comparando uma rede neural com métodos tradicionais de previsão e com uma política reativa (Seção~\ref{sec:escopo}). Para o Projeto Final I, a meta foi um protótipo de ponta a ponta que servisse de evidência de viabilidade: partir do rastro bruto da Alibaba e chegar às curvas de custo contra violações, primeiro com previsores tradicionais e, na etapa seguinte, com a rede neural. A construção foi dividida em fases curtas, cada uma com uma especificação, um critério de aceite e uma duração reservada, e com pontos de verificação ao fim das fases de ambiente, dados, simulador e experimento. As fases, a duração prevista e as datas de conclusão estão na Tabela~\ref{tab:cronograma-pf1}; a entrega do protótipo estava prevista para 31/10/2026.
 
 \section{Atividades realizadas}
 \label{sec:atividades-realizadas}
@@ -112,15 +112,43 @@ Reativa (HPA) & 0,82 & 1,340 & \textbf{1,08} & 1,376 & 0,65 & 0,92 & 1,197 & 4,9
 \parbox{\textwidth}{\footnotesize Nota: Par. é a margem $m$ na política preditiva e a utilização-alvo $u^{*}$ na reativa, escolhida na validação (Equação~\ref{eq:calibracao}) com $L = 1$; com $L = 2$, a escolha é refeita da mesma forma. Valores de $V$ em negrito ultrapassam $\varepsilon$ no teste.}
 \end{table}
 
-\textbf{A previsão reduz muito o custo em relação ao dimensionamento estático, mas pouco se distingue da política reativa.} Em $\varepsilon = 5\%$, a política preditiva com o ARIMA tem $C_{\mathrm{norm}} = 1{,}176$, 35,7\% abaixo do dimensionamento estático (1,830) e 1,7\% abaixo da reativa (1,197); só o ARIMA e o Holt-Winters (1,185) ficam abaixo da reativa, enquanto a GRU, o ingênuo e a média móvel ficam acima. Em $\varepsilon = 1\%$, a GRU tem $C_{\mathrm{norm}} = 1{,}287$, 3,9\% abaixo da reativa, que ultrapassa o limite no teste. Com uma única janela de teste, diferenças desse tamanho não permitem atribuir o ganho ao previsor.
+\textbf{A previsão reduz muito o custo em relação ao dimensionamento estático, mas pouco se distingue da política reativa.} Em $\varepsilon = 5\%$, a política preditiva com o ARIMA tem $C_{\mathrm{norm}} = 1{,}176$, 35,7\% abaixo do dimensionamento estático (1,830) e 1,7\% abaixo da reativa (1,197); só o ARIMA e o Holt-Winters (1,185) ficam abaixo da reativa, enquanto a GRU, o ingênuo e a média móvel ficam acima. Em $\varepsilon = 1\%$, a GRU tem $C_{\mathrm{norm}} = 1{,}287$, 3,9\% abaixo da reativa, que ultrapassa o limite no teste. Com uma única janela de teste, diferenças desse tamanho não permitem atribuir o ganho ao previsor. A Tabela~\ref{tab:uoa} mostra a origem do custo: pelas definições da Equação~\ref{eq:metricas-alocacao}, $C_{\mathrm{norm}} = (1 - U)(1 - O_{\text{oráculo}})/(1 - O)$, e, como $U$ fica abaixo de 0,4\% em todas as políticas, exceto o sazonal ingênuo, o custo acima do oráculo é quase todo capacidade ociosa. Em $\varepsilon = 5\%$, $O$ vai de 1,89\% no oráculo, que só perde o arredondamento de $\lceil d_t / k \rceil$, a 16,84\%--20,92\% nas políticas que cumprem o limite e a 46,41\% no dimensionamento estático.
+
+\begin{table}[htbp]
+\centering
+\caption{Demanda não atendida, capacidade ociosa e alterações no teste, com $L = 1$.}
+\label{tab:uoa}
+\footnotesize
+\begin{tabular}{l rrr @{\hspace{12pt}} rrr}
+\toprule
+ & \multicolumn{3}{c}{$\varepsilon = 1\%$} & \multicolumn{3}{c}{$\varepsilon = 5\%$} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+\textbf{Política} & $U$ (\%) & $O$ (\%) & $A$ & $U$ (\%) & $O$ (\%) & $A$ \\
+\midrule
+Oráculo & 0,00 & 1,89 & 378 & 0,00 & 1,89 & 378 \\
+Dimensionamento estático & 0,01 & 46,41 & 0 & 0,01 & 46,41 & 0 \\
+Reativa (HPA) & 0,06 & 26,84 & 116 & 0,39 & 18,37 & 116 \\
+\textit{Preditiva com:} & & & & & & \\
+\quad ARIMA & 0,04 & 25,40 & 386 & 0,29 & 16,84 & 379 \\
+\quad GRU & 0,06 & 23,83 & 345 & 0,24 & 18,37 & 326 \\
+\quad Holt-Winters & 0,07 & 29,50 & 409 & 0,31 & 17,49 & 411 \\
+\quad Ingênuo & 0,02 & 28,57 & 403 & 0,25 & 18,82 & 397 \\
+\quad Média móvel & 0,06 & 27,60 & 284 & 0,26 & 20,92 & 282 \\
+\quad Sazonal ingênuo & 1,22 & 23,66 & 408 & 4,34 & 14,89 & 398 \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+\parbox{\textwidth}{\footnotesize Nota: valores nos pontos de operação da Tabela~\ref{tab:pontos-operacao}; o oráculo e o dimensionamento estático não dependem de $\varepsilon$.}
+\end{table}
 
 \textbf{A GRU é competitiva com o ARIMA, sem vantagem clara.} A diferença de custo entre os dois fica em torno de 2\% e muda de sentido entre os limites: a GRU é mais barata em $\varepsilon = 1\%$, com 1,287 contra 1,315 e o mesmo número de intervalos com violação, e o ARIMA em $\varepsilon = 5\%$, com 1,176 contra 1,199. Como a escolha e a medida dependem de poucos intervalos com violação (Seção~\ref{sec:dificuldades}), a diferença não permite afirmar que um é melhor.
 
 \textbf{Menor erro de previsão não garante menor custo.} O Holt-Winters tem o quarto menor RMSE, mas, em $\varepsilon = 1\%$, é o previsor mais caro entre os que cumprem o limite no teste, acima da média móvel, cujo RMSE é 8\% maior; em $\varepsilon = 5\%$, ao contrário, é o segundo mais barato, à frente da GRU e do ingênuo, que têm RMSE menor. Em $\varepsilon = 1\%$, porém, o Holt-Winters e a média móvel operam com $V = 0{,}43\%$, contra 0,87\% do ARIMA, da GRU e do ingênuo, de modo que parte do custo maior compra menos violações, e a diferença cabe em dois intervalos com violação no teste; o resultado é tratado como indício para a QP2. Uma hipótese a testar no Projeto Final II é que o que pesa na alocação é o erro nas subidas da demanda, e não o erro médio.
 
-\textbf{A calibração na validação falha quando a demanda muda de comportamento entre os conjuntos.} O sazonal ingênuo, de pior erro, tem o menor custo nos dois limites só porque viola em 13,6\% e 33,5\% dos intervalos do teste. Seu viés com $h = 1$, a diferença média entre a demanda de um dia antes e a atual, passa de $+96{,}08$ na validação, em que a demanda cai em relação ao dia anterior, para $-166{,}41$ no teste, em que ela sobe, e a margem escolhida na validação deixa de cobrir a subestimação. Calibrar a margem em uma única janela supõe que o erro tem a mesma distribuição na validação e no teste.
+\textbf{A calibração na validação falha quando a demanda muda de comportamento entre os conjuntos.} O sazonal ingênuo, de pior erro, tem o menor custo nos dois limites só porque viola em 13,6\% e 33,5\% dos intervalos do teste. Seu viés com $h = 1$, a diferença média entre a demanda de um dia antes e a atual, passa de $+96{,}08$ na validação, em que a demanda cai em relação ao dia anterior, para $-166{,}41$ no teste, em que ela sobe, e a margem escolhida na validação deixa de cobrir a subestimação. Calibrar a margem em uma única janela supõe que o erro tem a mesma distribuição na validação e no teste. Em $U$, a distância para as demais políticas é ainda maior: em $\varepsilon = 5\%$, ele deixa de atender 4,34\% da demanda, contra no máximo 0,39\% das demais políticas (Tabela~\ref{tab:uoa}).
 
-\textbf{A política reativa muda de tamanho com muito menos frequência.} Nos pontos de operação, ela altera o número de instâncias 116 vezes no teste, contra 326 a 411 vezes das políticas preditivas, exceto a média móvel, com 282 a 284. Como o modelo de custo não cobra pelas alterações, essa vantagem da reativa não aparece em $C$.
+\textbf{A política reativa muda de tamanho com muito menos frequência.} Nos pontos de operação, ela altera o número de instâncias 116 vezes no teste (Tabela~\ref{tab:uoa}), contra 326 a 411 vezes das políticas preditivas, exceto a média móvel, com 282 a 284. Como o modelo de custo não cobra pelas alterações, essa vantagem da reativa não aparece em $C$.
 
 \textbf{Com $L = 2$, a vantagem da previsão sobre a política reativa diminui.} O custo no ponto de operação sobe em todas as políticas que dependem da demanda recente (Tabela~\ref{tab:pontos-operacao}). Em $\varepsilon = 1\%$, só a GRU fica abaixo da reativa, com 1,356 contra 1,376, 1,5\% a menos; em $\varepsilon = 5\%$, a reativa, com 1,223, fica abaixo de todas as preditivas que cumprem o limite no teste, a GRU 0,2\% acima. O sazonal ingênuo não muda, porque sua previsão não depende do horizonte. Com uma única janela de teste, esse resultado ainda é preliminar.
 
@@ -135,7 +163,7 @@ Cada pendência corresponde a uma atividade de mesmo nome na Tabela~\ref{tab:cro
     \item simulação no CloudSim Plus (\ref{oe:cloudsim});
     \item incorporação da memória, na alocação e na entrada da GRU;
     \item replicação no rastro do Google (\ref{oe:replicacao});
-    \item várias sementes e janelas de teste, com desenho e critério estatístico a definir (\ref{oe:robustez});
+    \item várias sementes e janelas de teste, com o protocolo da Seção~\ref{subsec:objetivos-especificos} (\ref{oe:robustez});
     \item experimentos finais de custo, violações e erro contra custo, hoje preliminares (\ref{oe:custo}, \ref{oe:erro});
     \item sensibilidade à antecedência $L$, hoje restrita a $L = 1$ e $L = 2$ (\ref{oe:sensibilidade}).
 \end{itemize}
