@@ -1,7 +1,7 @@
 \chapter{Situação Atual}
 \label{cap:situacao-atual}
 
-Este capítulo apresenta o contexto necessário para compreender o problema tratado neste trabalho. A Seção~\ref{sec:conceitos} define os conceitos e a terminologia básica. As Seções~\ref{sec:previsao} e~\ref{sec:alocacao} descrevem, respectivamente, as abordagens existentes para previsão de carga e para alocação de recursos em nuvem, destacando suas limitações. A Seção~\ref{sec:comparativo} compara os trabalhos mais próximos desta proposta, e a Seção~\ref{sec:tecnologias} apresenta as tecnologias que serão utilizadas.
+Este capítulo apresenta o contexto necessário para compreender o problema tratado neste trabalho. A Seção~\ref{sec:conceitos} define os conceitos e a terminologia básica. As Seções~\ref{sec:previsao} e~\ref{sec:alocacao} descrevem, respectivamente, as abordagens existentes para previsão de carga e para alocação de recursos em nuvem, destacando suas limitações. A Seção~\ref{sec:comparativo} compara os trabalhos mais próximos desta proposta, e a Seção~\ref{sec:tecnologias} apresenta as tecnologias utilizadas.
 
 \section{Conceitos e terminologia}
 \label{sec:conceitos}
@@ -13,7 +13,7 @@ Uma das características essenciais da computação em nuvem é a elasticidade r
 
 A carga de trabalho (\textit{workload}) de um \textit{cluster} é o conjunto de demandas submetidas a ele, como tarefas em lote, serviços de longa duração e requisições de usuários. Do ponto de vista da infraestrutura, essa carga se manifesta como utilização de recursos, principalmente processador e memória. Quando essa utilização é agregada em intervalos regulares de duração $\Delta$, obtém-se uma série temporal $y_1, y_2, \dots, y_t$, em que $y_t$ é a utilização média (ou máxima) no intervalo $t$. Séries de carga em nuvem costumam combinar tendência, padrões periódicos (por exemplo, diários e semanais), ruído e picos abruptos, o que torna sua previsão difícil \cite{xu2022esdnn}.
 
-Prever a carga significa estimar $\hat{y}_{t+h}$, o valor da série $h$ intervalos à frente, a partir de uma janela com as $w$ observações mais recentes. O parâmetro $h$ é o horizonte de previsão e $w$ é o tamanho da janela de entrada. A previsão é univariada quando usa apenas a própria série e multivariada quando incorpora outras séries correlacionadas, como prever o uso de processador a partir do histórico de processador e de memória \cite{xu2022esdnn}.
+Prever a carga significa estimar $\hat{y}_{t+h}$, o valor da série $h$ intervalos à frente, a partir de uma janela com as $w$ observações mais recentes. O parâmetro $h$ é o horizonte de previsão e $w$ é o tamanho da janela de entrada. Quando é preciso distinguir o intervalo em que a previsão é feita do intervalo previsto, o primeiro é chamado de origem da previsão e denotado por $\tau$: uma previsão feita na origem $\tau$ só pode usar observações até $\tau$. A previsão é univariada quando usa apenas a própria série e multivariada quando incorpora outras séries correlacionadas, como prever o uso de processador a partir do histórico de processador e de memória \cite{xu2022esdnn}.
 
 Pesquisas sobre o tema dependem de rastros (\textit{traces}) públicos de \textit{clusters} reais, que registram eventos e uso de recursos de máquinas, tarefas e contêineres. O rastro mais recente do Google cobre oito células do gerenciador Borg durante o mês de maio de 2019 \cite{wilkes2020google}. O rastro de 2018 da Alibaba cobre cerca de 4.000 máquinas de um \textit{cluster} de produção ao longo de oito dias, com serviços \textit{online} e tarefas em lote compartilhando as mesmas máquinas, e inclui tabelas de uso de recursos por máquina e por contêiner \cite{alibaba2018trace}. Como esses rastros registram eventos e medições em granularidade fina, transformá-los em séries temporais regulares é uma etapa de pré-processamento necessária, que faz parte deste trabalho.
 
@@ -26,16 +26,16 @@ A qualidade de um serviço em nuvem é expressa por três conceitos relacionados
 
 Na literatura de alocação de recursos, a violação de SLA é frequentemente aproximada por medidas derivadas da utilização, já que os rastros públicos não registram a latência percebida pelos usuários. \citeonline{beloglazov2012optimal}, por exemplo, medem a fração do tempo em que os servidores ativos operam com utilização máxima, situação em que o desempenho das aplicações é presumivelmente degradado. \citeonline{rossi2023forecasting} consideram atendida a demanda que fica abaixo da capacidade prevista.
 
-Este trabalho adota uma aproximação do mesmo tipo. O SLI é a fração da demanda atendida pela capacidade provisionada, e ocorre uma violação no intervalo $t$ quando a demanda real supera a capacidade disponível, isto é, quando $d_t > k \cdot n_t$, na notação da Equação~\ref{eq:problema}. O parâmetro $\varepsilon$ daquela equação faz o papel do SLO. Essa simplificação não captura efeitos como filas ou degradação gradual de desempenho perto da saturação, mas permite comparar estratégias de alocação de forma consistente e reproduzível.
+Este trabalho adota uma aproximação do mesmo tipo. O SLI é medido por intervalo: o intervalo $t$ é atendido integralmente quando a capacidade disponível cobre a demanda real, isto é, quando $d_t \leq k \cdot n_t$, na notação da Equação~\ref{eq:problema}, e há violação no caso contrário. O SLO correspondente é que no máximo uma fração $\varepsilon$ dos intervalos fique sem atendimento integral, que é exatamente a restrição daquela equação. A fração da demanda que deixa de ser atendida é acompanhada como métrica complementar (Seção~\ref{subsec:metricas}). Essa simplificação não captura efeitos como filas ou degradação gradual de desempenho perto da saturação, mas permite comparar estratégias de alocação de forma consistente e reproduzível.
 
 \subsection{Provisionamento reativo e preditivo}
 \label{subsec:provisionamento}
 
 O escalonamento automático (\textit{autoscaling}) é o mecanismo que ajusta os recursos alocados a uma aplicação sem intervenção humana. Ele pode ser horizontal, quando altera o número de instâncias (máquinas virtuais ou contêineres), ou vertical, quando altera a capacidade de cada instância. Este trabalho trata apenas do escalonamento horizontal.
 
-\citeonline{lorido2014autoscaling} classificam as técnicas de escalonamento automático em cinco famílias: regras baseadas em limiares, aprendizado por reforço, teoria de filas, teoria de controle e análise de séries temporais. Do ponto de vista deste trabalho, a distinção mais importante é entre abordagens reativas e preditivas. No provisionamento reativo, a decisão no instante $t$ é tomada a partir do que já foi observado, normalmente a utilização corrente. No provisionamento preditivo, a decisão é tomada a partir de uma estimativa $\hat{d}_{t+h}$ da demanda futura.
+\citeonline{lorido2014autoscaling} classificam as técnicas de escalonamento automático em cinco famílias: regras baseadas em limiares, aprendizado por reforço, teoria de filas, teoria de controle e análise de séries temporais. Do ponto de vista deste trabalho, a distinção mais importante é entre abordagens reativas e preditivas. No provisionamento reativo, a decisão no instante $t$ é tomada a partir do que já foi observado, normalmente a utilização corrente. No provisionamento preditivo, a decisão é tomada a partir de uma estimativa $\hat{d}_{t+h}$ da demanda futura. Na alocação, a série prevista é a própria demanda, isto é, $y_t = d_t$.
 
-A desvantagem da abordagem reativa é o atraso. Entre a detecção de um aumento de carga e a disponibilidade de uma nova instância há o tempo de inicialização, que não é desprezível e varia entre provedores e configurações \cite{mao2012startup}. Durante esse intervalo, a aplicação opera com capacidade insuficiente. A abordagem preditiva tenta antecipar a demanda com um horizonte $h$ pelo menos igual a esse tempo de inicialização, de modo que a instância já esteja disponível quando a carga chegar. Provedores comerciais já oferecem modos de escalonamento preditivo, como o do Amazon EC2 Auto Scaling \cite{aws2024predictive}, o que reforça a relevância prática do problema.
+A desvantagem da abordagem reativa é o atraso. Entre a detecção de um aumento de carga e a disponibilidade de uma nova instância há o atraso de inicialização, que não é desprezível e varia entre provedores e configurações \cite{mao2012startup}. Durante esse período, a aplicação opera com capacidade insuficiente. Por isso, a decisão de alocação precisa ser tomada com antecedência. Neste trabalho, a decisão tomada com as observações disponíveis até o intervalo $\tau$ passa a valer no intervalo $\tau + L$, em que $L$ é a antecedência da decisão (\textit{lead time}), igual a um intervalo mais o atraso de inicialização, também medido em intervalos. Sem atraso de inicialização, $L = 1$ e a decisão vale já no intervalo seguinte. As duas abordagens estão sujeitas à mesma antecedência: a reativa decide em $\tau$ com a utilização observada em $\tau$, e a preditiva tenta antecipar a demanda do intervalo $\tau + L$, de modo que a instância já esteja disponível quando a carga chegar. Provedores comerciais já oferecem modos de escalonamento preditivo, como o do Amazon EC2 Auto Scaling \cite{aws2024predictive}, o que reforça a relevância prática do problema.
 
 Qualquer que seja a abordagem, cada decisão pode errar em duas direções. Há superprovisionamento quando a capacidade alocada excede a demanda ($k \cdot n_t > d_t$): o serviço é atendido, mas a capacidade ociosa $k \cdot n_t - d_t$ representa custo sem retorno. Há subprovisionamento quando a capacidade é menor que a demanda ($k \cdot n_t < d_t$): o custo é menor, mas parte da demanda não é atendida e o SLA pode ser violado. O objetivo da alocação é equilibrar essas duas falhas, e a qualidade da previsão determina o quanto esse equilíbrio pode ser alcançado.
 
@@ -44,7 +44,7 @@ Qualquer que seja a abordagem, cada decisão pode errar em duas direções. Há 
 
 As métricas usadas na literatura se dividem em dois grupos, e a distinção entre eles é central para este trabalho.
 
-\textbf{Métricas de previsão.} Medem o quanto a previsão se aproxima do valor real, independentemente de como ela será usada. Para $N$ previsões $\hat{y}_i$ e valores reais $y_i$, as mais comuns são:
+\textbf{Métricas de previsão.} Medem o quanto a previsão se aproxima do valor real, independentemente de como ela será usada. Para $N$ previsões $\hat{y}_i$ e valores reais $y_i$, as mais comuns são o erro quadrático médio (MSE), sua raiz (RMSE), o erro absoluto médio (MAE) e o erro percentual absoluto médio (MAPE):
 
 \begin{align}
 \mathrm{MSE}  &= \frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2, &
@@ -53,22 +53,40 @@ As métricas usadas na literatura se dividem em dois grupos, e a distinção ent
 \mathrm{MAPE} &= \frac{100\%}{N}\sum_{i=1}^{N}\left\lvert \frac{y_i - \hat{y}_i}{y_i} \right\rvert. \label{eq:mae-mape}
 \end{align}
 
-O MAPE é indefinido quando algum $y_i$ é zero e instável quando $y_i$ é próximo de zero, situação comum em períodos de baixa utilização. Além disso, as quatro métricas são simétricas: superestimar e subestimar a demanda pela mesma quantidade produz o mesmo erro. Para a alocação, porém, esses erros têm consequências diferentes, já que a superestimação gera custo e a subestimação gera violações. Por isso, um modelo com menor RMSE não é necessariamente o que leva às melhores decisões de alocação.
+O MAPE é indefinido quando algum $y_i$ é zero e instável quando $y_i$ é próximo de zero, situação comum em períodos de baixa utilização. Neste trabalho, ele é calculado apenas sobre os pontos em que $y_i$ não é próximo de zero, e a fração de pontos mantida, chamada de cobertura da máscara, é informada junto com o valor. Além disso, as quatro métricas são simétricas: superestimar e subestimar a demanda pela mesma quantidade produz o mesmo erro. Para a alocação, porém, esses erros têm consequências diferentes, já que a superestimação gera custo e a subestimação gera violações. Por isso, um modelo com menor RMSE não é necessariamente o que leva às melhores decisões de alocação. Para captar essa assimetria, são usadas também duas medidas que distinguem o sentido do erro: o viés, que é o erro médio com sinal, e a taxa de subestimação, que é a fração das previsões abaixo do valor real:
+
+\begin{align}
+\text{viés} &= \frac{1}{N}\sum_{i=1}^{N}(\hat{y}_i - y_i), &
+\text{taxa de subestimação} &= \frac{1}{N}\sum_{i=1}^{N}\mathbf{1}\left[\, \hat{y}_i < y_i \,\right]. \label{eq:vies}
+\end{align}
+
+\noindent Um viés negativo indica que o previsor tende a subestimar a demanda e, portanto, a provocar violações quando usado na alocação sem margem.
 
 \textbf{Métricas de alocação.} Medem o resultado das decisões tomadas a partir da previsão. Para uma simulação com $T$ intervalos, as métricas adotadas neste trabalho são:
 
 \begin{align}
-C &= \sum_{t=1}^{T} c \cdot n_t
+C &= \sum_{t=1}^{T} c \cdot n_t,
   && \text{(custo operacional total)} \label{eq:custo}\\
-V &= \frac{1}{T}\sum_{t=1}^{T} \mathbf{1}\left[\, d_t > k \cdot n_t \,\right]
+V &= \frac{1}{T}\sum_{t=1}^{T} \mathbf{1}\left[\, d_t > k \cdot n_t \,\right],
   && \text{(fração de intervalos com violação)} \label{eq:violacao}\\
-U &= \frac{\sum_{t} \max(0,\, d_t - k \cdot n_t)}{\sum_{t} d_t}
+U &= \frac{\sum_{t} \max(0,\, d_t - k \cdot n_t)}{\sum_{t} d_t},
   && \text{(fração da demanda não atendida)} \label{eq:nao-atendida}\\
-O &= \frac{\sum_{t} \max(0,\, k \cdot n_t - d_t)}{\sum_{t} k \cdot n_t}
-  && \text{(fração da capacidade ociosa)} \label{eq:ociosa}
+O &= \frac{\sum_{t} \max(0,\, k \cdot n_t - d_t)}{\sum_{t} k \cdot n_t},
+  && \text{(fração da capacidade ociosa)} \label{eq:ociosa}\\
+A &= \sum_{t=2}^{T} \mathbf{1}\left[\, n_t \neq n_{t-1} \,\right].
+  && \text{(número de alterações em $n_t$)} \label{eq:alteracoes}
 \end{align}
 
-\noindent Também é útil contar o número de alterações em $n_t$ ao longo da simulação, pois políticas que oscilam com frequência são indesejáveis na prática. Essas métricas correspondem diretamente aos termos da formulação da Equação~\ref{eq:problema}: $C$ é a função objetivo e $V$ é o lado esquerdo da restrição.
+\noindent O número de alterações $A$ é acompanhado porque políticas que oscilam com frequência são indesejáveis na prática. Essas métricas correspondem diretamente aos termos da formulação da Equação~\ref{eq:problema}: $C$ é a função objetivo e $V$ é o lado esquerdo da restrição.
+
+Para comparar políticas, o custo é normalizado pelo de um oráculo, uma política de referência que conhece a demanda futura e aloca, em cada intervalo, o menor número de instâncias que a atende, $\lceil d_t / k \rceil$:
+
+\begin{equation}
+\label{eq:custo-normalizado}
+C_{\mathrm{norm}} = \frac{C}{C_{\text{oráculo}}}.
+\end{equation}
+
+\noindent Como nenhuma alocação mais barata que a do oráculo atende toda a demanda, $C_{\text{oráculo}}$ é o piso do custo sem violações. Uma política que viola pode custar menos que o oráculo, e por isso $C_{\mathrm{norm}}$ deve ser lido sempre junto com $V$.
 
 As métricas de nível de serviço propostas por \citeonline{rossi2023forecasting} ficam entre os dois grupos. A taxa de sucesso mede a fração de intervalos em que a demanda real fica abaixo do limite superior da previsão, e o total de recursos previstos soma esses limites superiores em relação à demanda real. Ambas são calculadas sobre a própria previsão, mas se aproximam, respectivamente, do complemento de $V$ e do custo $C$ no caso em que a capacidade pode ser ajustada de forma contínua. Este trabalho dá um passo adiante ao aplicar a previsão a uma política de alocação com instâncias discretas e medir as métricas de alocação diretamente.
 
@@ -77,14 +95,7 @@ As métricas de nível de serviço propostas por \citeonline{rossi2023forecastin
 
 \subsection{Modelos estatísticos}
 \label{subsec:estatisticos}
-Os métodos mais simples de previsão servem como referência para todos os demais \cite{hyndman2018forecasting}. O método ingênuo, ou de persistência, assume que o próximo valor será igual ao último observado, $\hat{y}_{t+1} = y_t$. A média móvel usa a média das $w$ últimas observações. A suavização exponencial simples atribui pesos que decaem geometricamente com a idade da observação:
-
-\begin{equation}
-\label{eq:ses}
-\hat{y}_{t+1} = \alpha\, y_t + (1 - \alpha)\, \hat{y}_t, \qquad 0 < \alpha \leq 1,
-\end{equation}
-
-\noindent em que valores maiores de $\alpha$ fazem o modelo reagir mais rapidamente a mudanças. O método de Holt-Winters estende essa ideia com componentes de tendência e de sazonalidade, o que o torna adequado a séries com padrões periódicos, como os ciclos diários comuns em cargas de nuvem \cite{hyndman2018forecasting}.
+Os métodos mais simples de previsão servem como referência para todos os demais \cite{hyndman2018forecasting}. O método ingênuo, ou de persistência, assume que o próximo valor será igual ao último observado, $\hat{y}_{t+1} = y_t$. A média móvel usa a média das $w$ últimas observações. O sazonal ingênuo repete o valor observado um período sazonal antes, $\hat{y}_{t+h} = y_{t+h-s}$, em que $s$ é o período da sazonalidade, medido em intervalos, e $h \leq s$. A suavização exponencial simples prevê uma média ponderada das observações passadas, com pesos que decaem geometricamente com a idade da observação. O método de Holt-Winters estende essa ideia com componentes de tendência e de sazonalidade, o que o torna adequado a séries com padrões periódicos, como os ciclos diários comuns em cargas de nuvem \cite{hyndman2018forecasting}.
 
 A família ARIMA (\textit{AutoRegressive Integrated Moving Average}), sistematizada pela metodologia de Box e Jenkins \cite{box2015time}, é o modelo estatístico mais usado em previsão de séries temporais. Um modelo ARIMA$(p,d,q)$ aplica $d$ diferenciações para tornar a série estacionária e descreve o resultado como combinação linear de $p$ valores passados (componente autorregressiva) e de $q$ erros de previsão passados (componente de média móvel). Usando o operador de defasagem $B$, definido por $B\,y_t = y_{t-1}$, o modelo é escrito como:
 
@@ -94,29 +105,29 @@ A família ARIMA (\textit{AutoRegressive Integrated Moving Average}), sistematiz
 = \beta_0 + \left(1 + \sum_{j=1}^{q}\theta_j B^j\right)a_t,
 \end{equation}
 
-\noindent em que $\phi_i$ e $\theta_j$ são os coeficientes estimados, $\beta_0$ é uma constante e $a_t$ é um ruído branco. A variante sazonal, SARIMA, acrescenta termos equivalentes defasados pelo período da sazonalidade. A escolha das ordens $p$, $d$ e $q$ pode ser feita pela análise das funções de autocorrelação ou por critérios de informação, como o AIC \cite{hyndman2018forecasting}.
+\noindent em que $\phi_i$ e $\theta_j$ são os coeficientes estimados, $\beta_0$ é uma constante e $a_t$ é um ruído branco. A variante sazonal, SARIMA (\textit{Seasonal ARIMA}), acrescenta termos equivalentes defasados pelo período da sazonalidade. A escolha das ordens $p$, $d$ e $q$ pode ser feita pela análise das funções de autocorrelação ou por critérios de informação, como o critério de informação de Akaike (AIC) \cite{hyndman2018forecasting}.
 
-No contexto de nuvem, \citeonline{calheiros2015arima} aplicaram um modelo ARIMA a rastros reais de requisições à Wikipédia em inglês, agregados por hora, para apoiar o provisionamento proativo de recursos de provedores de \textit{software} como serviço. O modelo prevê a demanda da hora seguinte, e um módulo de desempenho converte essa previsão no número de máquinas virtuais necessárias. Além da precisão da previsão, que chegou a 91\% em média, os autores avaliaram em simulação, com o CloudSim \cite{calheiros2011cloudsim}, o efeito das previsões sobre a utilização dos recursos e a qualidade de serviço. Um ponto especialmente relevante para este trabalho é que eles repetiram a simulação usando, em vez do valor previsto, os limites inferiores e superiores dos intervalos de confiança de 80\% e 95\%. Usar os limites superiores reduziu as requisições rejeitadas e as violações de QoS, ao custo de mais horas de máquina virtual, o que mostra de forma concreta o equilíbrio entre custo e violações controlado por um ajuste aplicado depois da previsão. A avaliação, contudo, envolve um único modelo de previsão.
+No contexto de nuvem, \citeonline{calheiros2015arima} aplicaram um modelo ARIMA a rastros reais de requisições à Wikipédia em inglês, agregados por hora, para apoiar o provisionamento proativo de recursos de provedores de \textit{software} como serviço. O modelo prevê a demanda da hora seguinte, e um módulo de desempenho converte essa previsão no número de máquinas virtuais necessárias. Além da precisão da previsão, que chegou a 91\% em média, os autores avaliaram em simulação, com o CloudSim \cite{calheiros2011cloudsim}, o efeito das previsões sobre a utilização dos recursos e a qualidade de serviço (QoS). Um ponto especialmente relevante para este trabalho é que eles repetiram a simulação usando, em vez do valor previsto, os limites inferiores e superiores dos intervalos de confiança de 80\% e 95\%. Usar os limites superiores reduziu as requisições rejeitadas e as violações de QoS, ao custo de mais horas de máquina virtual, o que mostra de forma concreta o equilíbrio entre custo e violações controlado por um ajuste aplicado depois da previsão. A avaliação, contudo, envolve um único modelo de previsão.
 
-\textbf{Limitações.} Os modelos estatísticos clássicos assumem relações lineares e, no caso do ARIMA, estacionariedade após a diferenciação. Cargas de nuvem frequentemente violam essas hipóteses, com mudanças abruptas de regime e picos que não seguem um padrão linear. Esses modelos também são essencialmente univariados em sua forma básica e precisam ser reajustados quando o comportamento da série muda. Por outro lado, eles exigem poucos dados, são baratos de ajustar e têm parâmetros interpretáveis. Por isso, devem estar presentes em qualquer comparação: uma rede neural só se justifica se superar essas alternativas mais simples sob as mesmas condições.
+\textbf{Limitações.} Os modelos estatísticos tradicionais assumem relações lineares e, no caso do ARIMA, estacionariedade após a diferenciação. Cargas de nuvem frequentemente violam essas hipóteses, com mudanças abruptas de regime e picos que não seguem um padrão linear. Esses modelos também são essencialmente univariados em sua forma básica e precisam ser reajustados quando o comportamento da série muda. Por outro lado, eles exigem poucos dados, são baratos de ajustar e têm parâmetros interpretáveis. Por isso, devem estar presentes em qualquer comparação: uma rede neural só se justifica se superar essas alternativas mais simples sob as mesmas condições.
 
 \subsection{Redes neurais recorrentes}
 \label{subsec:recorrentes}
 
 Para aplicar uma rede neural à previsão, a série é transformada em um problema de aprendizado supervisionado por meio de uma janela deslizante: cada exemplo tem como entrada as $w$ observações mais recentes e como saída o valor a ser previsto. Para vários horizontes, o modelo pode ser aplicado de forma recursiva, realimentando as próprias previsões e acumulando erro, ou de forma direta, com uma saída para cada horizonte \cite{taieb2012strategies}.
 
-As redes neurais recorrentes (RNN) leem a janela em ordem e mantêm um estado interno que funciona como memória do que já foi visto, o que as torna adequadas a séries temporais. Em sequências longas, porém, o treinamento tem dificuldade de aprender relações entre observações distantes \cite{bengio1994learning}. A LSTM resolve esse problema com portas que aprendem o que guardar e o que esquecer \cite{hochreiter1997lstm}, e a GRU simplifica essa ideia com apenas duas portas \cite{cho2014gru}, sendo mais barata de treinar e com desempenho comparável \cite{chung2014empirical}.
+As redes neurais recorrentes (RNN) leem a janela em ordem e mantêm um estado interno que funciona como memória do que já foi visto, o que as torna adequadas a séries temporais. Em sequências longas, porém, o treinamento tem dificuldade de aprender relações entre observações distantes \cite{bengio1994learning}. A LSTM (\textit{Long Short-Term Memory}) resolve esse problema com portas que aprendem o que guardar e o que esquecer \cite{hochreiter1997lstm}, e a GRU (\textit{Gated Recurrent Unit}) simplifica essa ideia com apenas duas portas \cite{cho2014gru}, sendo mais barata de treinar e com desempenho comparável \cite{chung2014empirical}.
 
 O esDNN \cite{xu2022esdnn} combina uma GRU modificada com camadas convolucionais para prever o uso de processador e de memória nos rastros da Alibaba e do Google. Nos experimentos, a GRU pura é competitiva em horizontes curtos, e o esDNN se destaca em horizontes longos. A avaliação, no entanto, apoia-se em métricas de erro simétricas, que não distinguem superestimação de subestimação (Seção~\ref{subsec:metricas}).
 
-\textbf{Limitações.} Redes recorrentes exigem mais dados e mais ajuste do que os modelos estatísticos, e, como qualquer previsor treinado para minimizar um erro médio, tendem a suavizar os picos de demanda. \citeonline{agullo2025enhancing} mostram que previsores clássicos e profundos falham justamente nesses picos, sem que as métricas usuais revelem a falha, e que ajustar a saída da previsão melhora a antecipação dos picos ao custo de mais superprovisionamento. Isso reforça que o erro médio não basta para avaliar um previsor usado na alocação.
+\textbf{Limitações.} Redes recorrentes exigem mais dados e mais ajuste do que os modelos estatísticos, e, como qualquer previsor treinado para minimizar um erro médio, tendem a suavizar os picos de demanda. \citeonline{agullo2025enhancing} mostram que previsores tradicionais e profundos falham justamente nesses picos, sem que as métricas usuais revelem a falha, e que ajustar a saída da previsão melhora a antecipação dos picos ao custo de mais superprovisionamento. Isso reforça que o erro médio não basta para avaliar um previsor usado na alocação.
 
 \subsection{Modelos com quantificação de incerteza}
 \label{subsec:incerteza}
 
-\citeonline{rossi2023forecasting} propõem modelos bayesianos profundos (HBNN e LSTMD), em versões univariada e bivariada, que preveem não apenas um valor, mas uma distribuição para a demanda futura de processador e de memória. Os experimentos usam rastros do Google e da Alibaba e comparam os modelos com uma LSTM determinística. Os autores mostram que as métricas de erro pontual não distinguem bem os modelos, enquanto métricas de nível de serviço, calculadas sobre o limite superior do intervalo de confiança, evidenciam a vantagem de modelar a incerteza. O trabalho também investiga transferência de aprendizado e conclui que ela funciona razoavelmente dentro de um mesmo provedor, mas se degrada entre provedores diferentes.
+\citeonline{rossi2023forecasting} propõem dois modelos profundos com quantificação de incerteza, uma rede neural bayesiana (HBNN) e uma LSTM com saída distribucional (LSTMD), em versões univariada e bivariada, que preveem não apenas um valor, mas uma distribuição para a demanda futura de processador e de memória. Os experimentos usam rastros do Google e da Alibaba e comparam os modelos com uma LSTM determinística. Os autores mostram que as métricas de erro pontual não distinguem bem os modelos, enquanto métricas de nível de serviço, calculadas sobre o limite superior do intervalo de confiança, evidenciam a vantagem de modelar a incerteza. O trabalho também investiga transferência de aprendizado e conclui que ela funciona razoavelmente dentro de um mesmo provedor, mas se degrada entre provedores diferentes.
 
-\textbf{Limitações.} O efeito da incerteza é medido por métricas calculadas sobre a própria previsão, sem acoplar os modelos a um mecanismo de alocação, e os próprios autores apontam essa integração como trabalho futuro \cite{rossi2023forecasting}. Além disso, as métricas de nível de serviço supõem que a capacidade possa ser ajustada de forma contínua, enquanto, na prática, os recursos são alocados em instâncias discretas, com atraso de inicialização. Ainda assim, o trabalho sugere uma ideia simples e útil: provisionar pelo limite superior de um intervalo de previsão, e não pelo valor central, é uma forma de trocar custo por menos violações. A margem de segurança $m$ apresentada na Seção~\ref{subsec:alocacao-preditiva} é a versão determinística dessa mesma ideia e é a adotada neste trabalho.
+\textbf{Limitações.} O efeito da incerteza é medido por métricas calculadas sobre a própria previsão, sem acoplar os modelos a um mecanismo de alocação, e os próprios autores apontam essa integração como trabalho futuro \cite{rossi2023forecasting}. Além disso, as métricas de nível de serviço supõem que a capacidade possa ser ajustada de forma contínua, enquanto, na prática, os recursos são alocados em instâncias discretas, com atraso de inicialização. Ainda assim, o trabalho sugere uma ideia simples e útil: provisionar pelo limite superior de um intervalo de confiança, e não pelo valor central, é uma forma de trocar custo por menos violações. A margem de segurança $m$ apresentada na Seção~\ref{subsec:alocacao-preditiva} é a versão determinística dessa mesma ideia e é a adotada neste trabalho.
 
 %======================================================================
 \section{Abordagens para alocação de recursos}
@@ -126,7 +137,7 @@ O esDNN \cite{xu2022esdnn} combina uma GRU modificada com camadas convolucionais
 \label{subsec:heuristicas}
 As políticas baseadas em limiares são a forma mais difundida de escalonamento automático, sobretudo pela simplicidade \cite{lorido2014autoscaling}. Na forma mais comum, define-se um limiar superior $\theta_{\mathrm{sup}}$ e um inferior $\theta_{\mathrm{inf}}$ para a utilização média das instâncias: se a utilização permanece acima de $\theta_{\mathrm{sup}}$ por um certo número de intervalos, uma instância é adicionada; se permanece abaixo de $\theta_{\mathrm{inf}}$, uma instância é removida. Um período de espera (\textit{cooldown}) após cada ação impede que o sistema oscile.
 
-Uma variação proporcional é usada pelo \textit{Horizontal Pod Autoscaler} do Kubernetes, que calcula o número desejado de réplicas a partir da razão entre a métrica observada $u_t$ e um valor-alvo $u^{*}$ \cite{kubernetes2024hpa}:
+Uma variação proporcional é usada pelo \textit{Horizontal Pod Autoscaler} (HPA) do Kubernetes, que calcula o número desejado de réplicas a partir da razão entre a métrica observada $u_t$ e um valor-alvo $u^{*}$ \cite{kubernetes2024hpa}:
 
 \begin{equation}
 \label{eq:hpa}
@@ -137,19 +148,19 @@ n_{t+1} = \left\lceil n_t \cdot \frac{u_t}{u^{*}} \right\rceil.
 
 Um problema relacionado, mas distinto, é o posicionamento das instâncias nos servidores físicos. Ele é tratado como uma variante do problema de empacotamento (\textit{bin packing}), que é NP-difícil, e por isso costuma ser resolvido com heurísticas como \textit{First-Fit} e \textit{Best-Fit Decreasing}. \citeonline{beloglazov2012optimal}, por exemplo, adaptam esta última para consolidar máquinas virtuais e reduzir o consumo de energia. Meta-heurísticas como algoritmos genéticos, otimização por enxame de partículas e colônia de formigas exploram o espaço de soluções de forma mais ampla, ao custo de maior tempo de computação \cite{bodra2025ml}. Como definido na Seção~\ref{sec:escopo}, o posicionamento está fora do escopo deste trabalho, que decide apenas quantas instâncias manter ativas.
 
-\textbf{Limitações.} Por construção, as políticas reativas só respondem depois que a mudança de carga já ocorreu, e o tempo de inicialização das instâncias amplia esse atraso. Os limiares precisam ser ajustados manualmente para cada aplicação: limiares agressivos causam oscilações, e limiares conservadores mantêm capacidade ociosa. Ainda assim, essas políticas são simples, previsíveis e amplamente usadas, o que faz da política reativa por limiar uma referência obrigatória na avaliação deste trabalho.
+\textbf{Limitações.} Por construção, as políticas reativas só respondem depois que a mudança de carga já ocorreu, e o atraso de inicialização das instâncias aumenta essa defasagem. Os limiares precisam ser ajustados manualmente para cada aplicação: limiares agressivos causam oscilações, e limiares conservadores mantêm capacidade ociosa. Ainda assim, essas políticas são simples, previsíveis e amplamente usadas, o que faz de uma política reativa uma referência obrigatória na avaliação deste trabalho. A referência adotada é a variante proporcional do HPA (Equação~\ref{eq:hpa}), com a faixa de tolerância e a janela de estabilização descritas acima.
 
 \subsection{Alocação guiada por previsão}
 \label{subsec:alocacao-preditiva}
 
-Na alocação guiada por previsão, a decisão é tomada em duas etapas desacopladas. Primeiro, um modelo estima a demanda $\hat{d}_{t+h}$ para o intervalo em que a decisão terá efeito. Em seguida, uma regra converte essa estimativa em número de instâncias, normalmente dividindo a demanda prevista pela capacidade de uma instância e acrescentando uma margem de segurança $m \geq 0$:
+Na alocação guiada por previsão, a decisão é tomada em duas etapas desacopladas. Primeiro, um modelo estima a demanda $\hat{d}_{t+h}$ para o intervalo em que a decisão terá efeito. Em seguida, uma regra converte essa estimativa em número de instâncias, normalmente dividindo a demanda prevista pela capacidade de uma instância e acrescentando uma margem de segurança $m \geq 0$, com um piso de $n_{\min}$ instâncias:
 
 \begin{equation}
 \label{eq:alocacao-margem}
-n_{t+h} = \left\lceil \frac{(1 + m)\, \hat{d}_{t+h}}{k} \right\rceil.
+n_{t+h} = \max\left(n_{\min},\, \left\lceil \frac{(1 + m)\, \hat{d}_{t+h}}{k} \right\rceil\right).
 \end{equation}
 
-\noindent A margem controla o equilíbrio entre custo e violações: margens maiores reduzem $V$ e aumentam $C$. Escolhê-la, calibrando em um conjunto de validação, é a forma prática de buscar o menor custo que respeita o limite $\varepsilon$ da Equação~\ref{eq:problema}. Quando o modelo fornece uma distribuição, a margem pode ser substituída por um quantil, como fazem \citeonline{rossi2023forecasting} e \citeonline{calheiros2015arima} ao provisionar pelo limite superior de um intervalo de confiança. Além disso, o horizonte $h$ deve cobrir o tempo de inicialização das instâncias \cite{mao2012startup}.
+\noindent Na alocação, $t$ é a origem $\tau$ da previsão e o horizonte é a antecedência da decisão, $h = L$, de modo que a previsão se refira ao intervalo em que a decisão vale e cubra o atraso de inicialização das instâncias \cite{mao2012startup}, como discutido na Seção~\ref{subsec:provisionamento}. A margem controla o equilíbrio entre custo e violações: margens maiores reduzem $V$ e aumentam $C$. Escolhê-la, calibrando em um conjunto de validação, é a forma prática de buscar o menor custo que respeita o limite $\varepsilon$ da Equação~\ref{eq:problema}. Quando o modelo fornece uma distribuição, a margem pode ser substituída por um quantil, como fazem \citeonline{rossi2023forecasting} e \citeonline{calheiros2015arima} ao provisionar pelo limite superior de um intervalo de confiança.
 
 O MagicScaler \cite{pan2023magicscaler} leva essa ideia mais longe: combina uma previsão com incerteza a uma otimização estocástica que minimiza o custo sujeito a um limite de demanda não atendida e, em \textit{clusters} da Alibaba Cloud, reduziu substancialmente a perda de qualidade de serviço em relação a uma política reativa, com pequeno aumento de custo. Seus dados, porém, são privados, e o mecanismo de decisão é aplicado apenas ao próprio previsor, sem comparação com outros modelos sob a mesma regra.
 
@@ -158,16 +169,16 @@ A principal vantagem do desacoplamento é a modularidade: com a regra de decisã
 \subsection{Aprendizado por reforço}
 \label{subsec:reforco}
 
-A revisão de \citeonline{bodra2025ml} compara abordagens recentes de aprendizado de máquina para alocação de recursos em nuvem, incluindo métodos de aprendizado por reforço profundo, meta-heurísticas híbridas e modelos de previsão. Os autores observam que os trabalhos analisados são avaliados em ambientes, conjuntos de dados e métricas muito diferentes entre si, muitas vezes com cargas sintéticas, o que dificulta a comparação direta. Apontam ainda que os métodos de aprendizado por reforço profundo são sensíveis ao projeto da função de recompensa e aos hiperparâmetros e enfrentam limitações de escalabilidade conforme o espaço de estados cresce.
-
 No aprendizado por reforço, a alocação é formulada como um problema de decisão sequencial. Um agente observa o estado do sistema, como a utilização recente e o número de instâncias ativas, escolhe uma ação, como adicionar, remover ou manter instâncias, e recebe uma recompensa que penaliza o custo e as violações de SLA. Ao longo de muitas interações, o agente aprende uma política que maximiza a recompensa acumulada. Diferentemente da alocação guiada por previsão, previsão e decisão não são separadas: a política mapeia diretamente estados em ações, e a antecipação da demanda fica implícita no que o agente aprende. O aprendizado por reforço aparece tanto na classificação de \citeonline{lorido2014autoscaling} quanto na revisão de \citeonline{bodra2025ml}.
 
-\textbf{Limitações e posicionamento.} Além da sensibilidade à função de recompensa e aos hiperparâmetros apontada por \citeonline{bodra2025ml}, uma política aprendida é difícil de interpretar: quando ela toma uma decisão ruim, não é simples identificar se o problema está na antecipação da demanda ou na regra de decisão. O treinamento também exige um ambiente de simulação e um grande número de episódios. Por esses motivos, este trabalho adota a abordagem desacoplada da Seção~\ref{subsec:alocacao-preditiva}, que permite isolar e medir o efeito da previsão sobre a alocação, e deixa o aprendizado por reforço fora do escopo (Seção~\ref{sec:escopo}). Comparar a abordagem desacoplada com uma política aprendida é uma extensão natural para trabalhos futuros.
+Essa revisão compara abordagens recentes de aprendizado de máquina para alocação de recursos em nuvem, incluindo métodos de aprendizado por reforço profundo, meta-heurísticas híbridas e modelos de previsão. Os autores observam que os trabalhos analisados são avaliados em ambientes, conjuntos de dados e métricas muito diferentes entre si, muitas vezes com cargas sintéticas, o que dificulta a comparação direta. Apontam ainda que os métodos de aprendizado por reforço profundo são sensíveis ao projeto da função de recompensa e aos hiperparâmetros e enfrentam limitações de escalabilidade conforme o espaço de estados cresce.
+
+\textbf{Limitações e posicionamento.} Além dessa sensibilidade, uma política aprendida é difícil de interpretar: quando ela toma uma decisão ruim, não é simples identificar se o problema está na antecipação da demanda ou na regra de decisão. O treinamento também exige um ambiente de simulação e um grande número de episódios. Por esses motivos, este trabalho adota a abordagem desacoplada da Seção~\ref{subsec:alocacao-preditiva}, que permite isolar e medir o efeito da previsão sobre a alocação, e deixa o aprendizado por reforço fora do escopo (Seção~\ref{sec:escopo}). Comparar a abordagem desacoplada com uma política aprendida é uma extensão natural para trabalhos futuros.
 
 \section{Comparativo dos trabalhos relacionados}
 \label{sec:comparativo}
 
-A Tabela~\ref{tab:comparativo} resume os trabalhos mais próximos desta proposta segundo os critérios relevantes para o problema definido na Seção~\ref{sec:definicao-problema}: a técnica de previsão, os dados usados, as métricas de avaliação, se a previsão é acoplada a uma decisão de alocação e se diferentes preditores são comparados sob a mesma política de alocação.
+A Tabela~\ref{tab:comparativo} resume os trabalhos mais próximos desta proposta segundo os critérios relevantes para o problema definido na Seção~\ref{sec:definicao-problema}: a técnica de previsão, os dados usados, as métricas de avaliação, se a previsão é acoplada a uma decisão de alocação e se diferentes previsores são comparados sob a mesma política de alocação.
 
 \begin{table}[htbp]
 \centering
@@ -188,17 +199,17 @@ A Tabela~\ref{tab:comparativo} resume os trabalhos mais próximos desta proposta
 \textbf{Dados} &
 \textbf{Métricas} &
 \textbf{Acopla à alocação} &
-\textbf{Compara preditores sob a mesma política} \\
+\textbf{Compara previsores sob a mesma política} \\
 \midrule
 \citeonline{calheiros2015arima} &
 ARIMA &
 Requisições à Wikipédia (1 h) &
-Precisão, rejeições, violações de QoS e horas de VM &
+Precisão, rejeições, violações de QoS e horas de máquina virtual &
 Sim &
 Não \\
 \addlinespace
 \citeonline{xu2022esdnn} &
-GRU modificada com CNN, multivariada &
+GRU modificada com camadas convolucionais, multivariada &
 Alibaba e Google &
 MSE, RMSE, MAPE e máquinas ativas &
 Parcial &
@@ -219,21 +230,21 @@ Não &
 Não se aplica \\
 \addlinespace
 \citeonline{agullo2025enhancing} &
-Clássicos, aprendizado de máquina e profundo, com saída ajustada &
+Tradicionais, aprendizado de máquina e profundo, com saída ajustada &
 Alibaba e Google &
 Erro, detecção de picos e superprovisionamento &
 Não &
 Não se aplica \\
 \addlinespace
 \citeonline{bodra2025ml} &
-Revisão: DRL, meta-heurísticas e previsores &
+Revisão: aprendizado por reforço profundo, meta-heurísticas e previsores &
 Variados, muitos sintéticos &
 Heterogêneas entre os trabalhos &
 Não se aplica &
 Não se aplica \\
 \addlinespace
 \textbf{Este trabalho} &
-GRU univariada com saída direta e cinco métodos clássicos &
+GRU com saída direta (processador no PF~I; processador e memória no PF~II) e cinco métodos tradicionais &
 Alibaba e Google &
 Erro de previsão, custo, violações de SLA e ociosidade &
 Sim &
@@ -242,33 +253,39 @@ Sim \\
 \end{tabularx}
 \end{table}
 
-A tabela evidencia uma separação entre duas linhas de trabalho. De um lado, os trabalhos de previsão \cite{xu2022esdnn, rossi2023forecasting, agullo2025enhancing} comparam vários modelos, mas avaliam-nos por métricas calculadas sobre a própria previsão. De outro, os trabalhos que acoplam a previsão à alocação \cite{calheiros2015arima, pan2023magicscaler} medem o efeito sobre o serviço, mas aplicam o mecanismo de decisão a um único preditor e o comparam com políticas reativas. Nenhum dos trabalhos analisados combina as duas coisas, isto é, submete vários preditores à mesma política de alocação e compara o custo e as violações resultantes.
+A tabela evidencia uma separação entre duas linhas de trabalho. De um lado, os trabalhos de previsão \cite{xu2022esdnn, rossi2023forecasting, agullo2025enhancing} comparam vários modelos, mas avaliam-nos por métricas calculadas sobre a própria previsão. De outro, os trabalhos que acoplam a previsão à alocação \cite{calheiros2015arima, pan2023magicscaler} medem o efeito sobre o serviço, mas aplicam o mecanismo de decisão a um único previsor e o comparam com políticas reativas. Nenhum dos trabalhos analisados combina as duas coisas, isto é, submete vários previsores à mesma política de alocação e compara o custo e as violações resultantes.
 
 \subsection{Síntese e lacuna}
 \label{subsec:lacuna}
 
-A análise dos trabalhos relacionados leva a três observações. Primeiro, a maior parte da literatura de previsão avalia os modelos isoladamente, por métricas de erro simétricas, que não refletem a assimetria entre superestimar a demanda, que gera custo, e subestimá-la, que gera violações \cite{xu2022esdnn, rossi2023forecasting}. Segundo, há evidências de que o erro médio é um guia incompleto para a alocação: previsores com bom desempenho nessas métricas falham justamente nos picos de demanda, que são os momentos em que as violações acontecem, e ajustes simples na saída da previsão mudam o equilíbrio entre custo e violações sem alterar o modelo \cite{agullo2025enhancing}. Terceiro, quando a previsão é acoplada à alocação, a comparação costuma ser feita contra políticas reativas, com dados privados ou em ambientes e métricas heterogêneos \cite{xu2022esdnn, pan2023magicscaler, bodra2025ml}, o que impede atribuir as diferenças observadas ao preditor.
+A análise dos trabalhos relacionados leva a três observações. Primeiro, a maior parte da literatura de previsão avalia os modelos isoladamente, por métricas de erro simétricas, que não refletem a assimetria entre superestimar a demanda, que gera custo, e subestimá-la, que gera violações \cite{xu2022esdnn, rossi2023forecasting}. Segundo, há evidências de que o erro médio é um guia incompleto para a alocação: previsores com bom desempenho nessas métricas falham justamente nos picos de demanda, que são os momentos em que as violações acontecem, e ajustes simples na saída da previsão mudam o equilíbrio entre custo e violações sem alterar o modelo \cite{agullo2025enhancing}. Terceiro, quando a previsão é acoplada à alocação, a comparação costuma ser feita contra políticas reativas, com dados privados ou em ambientes e métricas heterogêneos \cite{xu2022esdnn, pan2023magicscaler, bodra2025ml}, o que impede atribuir as diferenças observadas ao previsor.
 
-A lacuna que este trabalho busca preencher é, portanto, a de uma avaliação de ponta a ponta, com dados públicos de um \textit{cluster} real, que meça o custo e as violações de SLA obtidos por preditores de complexidade crescente, do método ingênuo à rede neural, todos submetidos à mesma política de alocação e calibrados para o mesmo limite de violações $\varepsilon$. Desse modo, a pergunta deixa de ser qual modelo erra menos e passa a ser quanto custo cada modelo economiza para um mesmo nível de serviço. O Capítulo~\ref{cap:objetivos} descreve a solução proposta para essa avaliação e os objetivos específicos do trabalho.
+A lacuna que este trabalho busca preencher é, portanto, a de uma avaliação de ponta a ponta, com dados públicos de um \textit{cluster} real, que meça o custo e as violações de SLA obtidos por previsores de complexidade crescente, do método ingênuo à rede neural, todos submetidos à mesma política de alocação e calibrados para o mesmo limite de violações $\varepsilon$. Desse modo, a pergunta deixa de ser qual modelo erra menos e passa a ser quanto custo cada modelo economiza para um mesmo nível de serviço. O Capítulo~\ref{cap:objetivos} descreve a solução proposta para essa avaliação e os objetivos específicos do trabalho.
 
 %======================================================================
 \section{Tecnologias utilizadas}
 \label{sec:tecnologias}
 
-Esta seção descreve as linguagens, bibliotecas e ferramentas adotadas, organizadas conforme as etapas do \textit{pipeline}: tratamento dos dados, previsão de carga, simulação da alocação e ambiente de execução. Todo o código é escrito em Python 3.12, linguagem escolhida pela disponibilidade de bibliotecas maduras para séries temporais e aprendizado profundo, e está disponível em repositório público \cite{rosas2026repo}.
+Esta seção descreve as linguagens, bibliotecas e ferramentas adotadas, organizadas conforme as etapas do \textit{pipeline}: tratamento dos dados, previsão de carga, simulação da alocação e ambiente de execução. O código do protótipo é escrito em Python 3.12, linguagem escolhida pela disponibilidade de bibliotecas maduras para séries temporais e aprendizado profundo, e está disponível em repositório público \cite{rosas2026repo}.
 
 \subsection{Tratamento dos dados}
+\label{subsec:tec-dados}
 
-A tabela de uso de recursos por máquina do rastro da Alibaba de 2018 \cite{alibaba2018trace} ocupa cerca de 1,7~GB compactada. Para agregá-la em uma série de demanda com intervalos de cinco minutos sem carregar o arquivo inteiro na memória, é usado o DuckDB \cite{raasveldt2019duckdb}, um banco de dados analítico embutido que executa consultas SQL diretamente sobre arquivos CSV. As séries resultantes são gravadas em formato Parquet e manipuladas com \textit{pandas} \cite{mckinney2010pandas} e NumPy \cite{harris2020numpy}. A mesma série alimenta todos os modelos, o que garante a comparabilidade entre eles.
+A tabela de uso de recursos por máquina do rastro da Alibaba de 2018 \cite{alibaba2018trace} ocupa cerca de 1,7~GB compactada. Para agregá-la em séries de demanda de processador e de memória com intervalos de cinco minutos sem carregar o arquivo inteiro na memória, é usado o DuckDB \cite{raasveldt2019duckdb}, um banco de dados analítico embutido que executa consultas na linguagem SQL (\textit{Structured Query Language}) diretamente sobre arquivos de valores separados por vírgula (CSV). As séries resultantes são gravadas em formato Parquet e manipuladas com pandas \cite{mckinney2010pandas} e NumPy \cite{harris2020numpy}. A mesma série alimenta todos os previsores, o que garante a comparabilidade entre eles.
 
 \subsection{Modelos de previsão}
+\label{subsec:tec-previsao}
 
-Os métodos ingênuo, de média móvel e sazonal ingênuo são implementados diretamente com NumPy. O ARIMA e o Holt-Winters usam a biblioteca \textit{statsmodels} \cite{seabold2010statsmodels} para a estimação dos parâmetros no conjunto de treino. A rede neural é implementada e treinada com PyTorch \cite{paszke2019pytorch}, que oferece flexibilidade para definir arquiteturas recorrentes e personalizar o ciclo de treinamento. Como a rede é pequena, é usada a versão do PyTorch apenas para CPU, o que dispensa GPU para reproduzir os experimentos.
+Os métodos ingênuo, de média móvel e sazonal ingênuo são implementados diretamente com NumPy. O ARIMA e o Holt-Winters usam a biblioteca statsmodels \cite{seabold2010statsmodels} para a estimação dos parâmetros no conjunto de treino. A rede neural é implementada e treinada com PyTorch \cite{paszke2019pytorch}, que oferece flexibilidade para definir arquiteturas recorrentes e personalizar o ciclo de treinamento. Como a rede é pequena, é usada a versão do PyTorch que executa apenas na unidade central de processamento (CPU), o que dispensa uma unidade de processamento gráfico (GPU) para reproduzir os experimentos.
 
 \subsection{Simulação}
+\label{subsec:tec-simulacao}
 
-A proposta inicial previa o uso do simulador CloudSim Plus \cite{silvafilho2017cloudsimplus}, um \textit{framework} em Java derivado do CloudSim \cite{calheiros2011cloudsim}. O CloudSim é um simulador de eventos discretos que modela centros de dados, servidores, máquinas virtuais e a execução de tarefas, incluindo políticas de compartilhamento dos núcleos de processamento entre máquinas virtuais e entre tarefas \cite{calheiros2011cloudsim}, e foi usado, por exemplo, para avaliar o provisionamento guiado por ARIMA de \citeonline{calheiros2015arima}. Durante o Projeto Final I, optou-se por implementar um simulador próprio, em Python, por três motivos. Primeiro, o CloudSim Plus modela em detalhe a execução de tarefas e o posicionamento de máquinas virtuais em servidores físicos, que estão fora do escopo deste trabalho (Seção~\ref{sec:escopo}), enquanto a decisão estudada aqui se resume a escolher o número de instâncias $n_t$ a cada intervalo, a partir da demanda agregada. Segundo, manter previsão e simulação na mesma linguagem evita uma ponte entre Python e Java para transferir as previsões. Terceiro, um simulador pequeno, em tempo discreto, pode ser coberto por testes automatizados e conferido intervalo a intervalo, o que é necessário para garantir que as diferenças entre preditores não sejam artefatos da simulação. O simulador implementa o atraso de provisionamento, as políticas descritas neste capítulo e as métricas da Seção~\ref{subsec:metricas}. As figuras são geradas com Matplotlib \cite{hunter2007matplotlib}.
+O simulador adotado para a avaliação final é o CloudSim Plus \cite{silvafilho2017cloudsimplus}, um \textit{framework} em Java derivado do CloudSim \cite{calheiros2011cloudsim}. O CloudSim é um simulador de eventos discretos que modela centros de dados, servidores, máquinas virtuais e a execução de tarefas, incluindo políticas de compartilhamento dos núcleos de processamento entre máquinas virtuais e entre tarefas \cite{calheiros2011cloudsim}, e foi usado, por exemplo, para avaliar o provisionamento guiado por ARIMA de \citeonline{calheiros2015arima}. No Projeto Final II, ele receberá as previsões geradas em Python, como descrito na Seção~\ref{sec:solucao}.
+
+Durante o Projeto Final I, o protótipo foi construído com um simulador próprio, em Python, de caráter temporário. Essa escolha teve três vantagens nessa etapa. Primeiro, a decisão estudada se resume a escolher o número de instâncias $n_t$ a cada intervalo, a partir da demanda agregada, o que um simulador pequeno, em tempo discreto, representa diretamente, sem modelar a execução de tarefas e o posicionamento de máquinas virtuais em servidores físicos. Segundo, manter previsão e simulação na mesma linguagem permitiu iterar rapidamente sobre o protocolo experimental. Terceiro, o simulador pôde ser coberto por testes automatizados e conferido intervalo a intervalo, o que ajudou a garantir que as diferenças entre previsores não fossem artefatos da simulação. O protótipo implementa a antecedência da decisão $L$, as políticas descritas neste capítulo e no Capítulo~\ref{cap:objetivos} e as métricas da Seção~\ref{subsec:metricas}. A mudança de simulador ao longo do trabalho é discutida no Capítulo~\ref{cap:plano-acao}. As figuras são geradas com Matplotlib \cite{hunter2007matplotlib}.
 
 \subsection{Ambiente de execução e reprodutibilidade}
+\label{subsec:tec-ambiente}
 
-As dependências são gerenciadas com o \textit{uv}, que fixa as versões de todas as bibliotecas em um arquivo de travamento, e o projeto pode ser executado também em um contêiner Docker. Um \textit{Makefile} encadeia as etapas do \textit{pipeline}, de modo que todas as tabelas e figuras podem ser regeneradas a partir dos dados brutos com um único comando. Todos os parâmetros dos experimentos, como a divisão dos dados, os horizontes de previsão e as grades de margens, ficam em um arquivo de configuração, e nenhum é fixado no código. A correção dos componentes é verificada com testes automatizados escritos com \textit{pytest}, e o código é versionado com Git no GitHub.
+As dependências são gerenciadas com o uv, que fixa as versões de todas as bibliotecas em um arquivo de travamento, e o projeto pode ser executado também em um contêiner Docker. Um Makefile encadeia as etapas do \textit{pipeline}, de modo que todas as tabelas e figuras podem ser regeneradas a partir dos dados brutos com um único comando. Todos os parâmetros dos experimentos, como a divisão dos dados, os horizontes de previsão e as grades de margens, ficam em um arquivo de configuração, e nenhum é fixado no código. A correção dos componentes é verificada com testes automatizados escritos com pytest, e o código é versionado com Git no GitHub.

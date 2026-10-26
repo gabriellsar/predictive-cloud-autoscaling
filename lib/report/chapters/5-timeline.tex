@@ -1,2 +1,67 @@
 \chapter{Cronogramas}
 \label{cap:cronogramas}
+
+%% Célula preenchida das tabelas de cronograma.
+\newcommand{\cronocel}{\cellcolor{gray!40}}
+
+Este capítulo apresenta o cronograma do Projeto Final I, com as atividades realizadas, e o cronograma proposto para o Projeto Final II. Nas duas tabelas, as células preenchidas marcam os meses em que cada atividade acontece, e a coluna \textbf{Objetivo} relaciona a atividade aos objetivos específicos da Seção~\ref{subsec:objetivos-especificos}.
+
+\section{Projeto Final I}
+\label{sec:cronograma-pf1}
+
+O Projeto Final I ocupou o segundo semestre de 2026, de agosto a novembro (Tabela~\ref{tab:cronograma-pf1}). Os primeiros meses foram dedicados à escolha do tema, à revisão bibliográfica e à elaboração da proposta. Em outubro, o protótipo foi construído e avaliado, com as datas detalhadas na Tabela~\ref{tab:fases}, e a redação deste relatório se estendeu de outubro a novembro.
+
+\begin{table}[htbp]
+\centering
+\caption{Cronograma do Projeto Final I, em 2026.}
+\label{tab:cronograma-pf1}
+\footnotesize
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\centering\arraybackslash}p{1.7cm} *{4}{>{\centering\arraybackslash}p{0.9cm}}}
+\toprule
+\textbf{Atividade} & \textbf{Objetivo} & \textbf{Ago} & \textbf{Set} & \textbf{Out} & \textbf{Nov} \\
+\midrule
+%% A CONFIRMAR: meses das três atividades seguintes, anteriores ao protótipo e sem registro no repositório.
+Escolha do tema e definição da pergunta de pesquisa & -- & \cronocel & & & \\ \addlinespace[1.5pt]
+Revisão bibliográfica & -- & \cronocel & \cronocel & \cronocel & \\ \addlinespace[1.5pt]
+Elaboração da proposta & -- & & \cronocel & & \\ \addlinespace[1.5pt]
+Ambiente de desenvolvimento e tratamento dos dados & \ref{oe:dados} & & & \cronocel & \\ \addlinespace[1.5pt]
+Previsores tradicionais e GRU & \ref{oe:previsores} & & & \cronocel & \\ \addlinespace[1.5pt]
+Protótipo do simulador e das políticas & \ref{oe:simulador} & & & \cronocel & \\ \addlinespace[1.5pt]
+Experimentos preliminares & \ref{oe:custo} a \ref{oe:sensibilidade} & & & \cronocel & \\ \addlinespace[1.5pt]
+Repositório reprodutível & \ref{oe:reprodutibilidade} & & & \cronocel & \\ \addlinespace[1.5pt]
+Redação do relatório do Projeto Final I & -- & & & \cronocel & \cronocel \\ \addlinespace[1.5pt]
+Entrega do relatório & -- & & & & \cronocel \\ \addlinespace[1.5pt]
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Projeto Final II}
+\label{sec:cronograma-pf2}
+
+O Projeto Final II vai de dezembro de 2026 a junho de 2027, com a defesa prevista para o fim de junho (Tabela~\ref{tab:cronograma-pf2}). O cronograma começa pela definição, com o orientador, da forma de incorporar a memória e pela migração para o CloudSim Plus, porque todos os resultados finais dependem das duas. Em seguida vêm a replicação no rastro do Google e a avaliação com várias sementes e janelas de teste, que alimentam os experimentos finais e a análise de sensibilidade. A substituição da margem por um quantil previsto pela rede só será avaliada se o cronograma permitir (Seção~\ref{sec:entregaveis}). A manutenção do repositório reprodutível acompanha todo o período.
+
+\begin{table}[htbp]
+\centering
+\caption{Cronograma proposto para o Projeto Final II.}
+\label{tab:cronograma-pf2}
+\footnotesize
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\centering\arraybackslash}p{1.7cm} *{7}{>{\centering\arraybackslash}p{0.7cm}}}
+\toprule
+ & & \textbf{2026} & \multicolumn{6}{c}{\textbf{2027}} \\
+\cmidrule(lr){3-3} \cmidrule(lr){4-9}
+\textbf{Atividade} & \textbf{Objetivo} & \textbf{Dez} & \textbf{Jan} & \textbf{Fev} & \textbf{Mar} & \textbf{Abr} & \textbf{Mai} & \textbf{Jun} \\
+\midrule
+Definição da forma de incorporar a memória & -- & \cronocel & & & & & & \\ \addlinespace[1.5pt]
+Simulação no CloudSim Plus & \ref{oe:cloudsim} & \cronocel & \cronocel & \cronocel & & & & \\ \addlinespace[1.5pt]
+Incorporação da memória & -- & & \cronocel & \cronocel & \cronocel & & & \\ \addlinespace[1.5pt]
+Replicação no rastro do Google & \ref{oe:replicacao} & & & \cronocel & \cronocel & \cronocel & & \\ \addlinespace[1.5pt]
+Avaliação com várias sementes e janelas de teste & \ref{oe:robustez} & & & & \cronocel & \cronocel & & \\ \addlinespace[1.5pt]
+Experimentos finais de custo, violações e erro contra custo & \ref{oe:custo}, \ref{oe:erro} & & & & & \cronocel & \cronocel & \\ \addlinespace[1.5pt]
+Análise de sensibilidade à antecedência $L$ & \ref{oe:sensibilidade} & & & & & \cronocel & \cronocel & \\ \addlinespace[1.5pt]
+Extensão opcional: quantil previsto pela rede & -- & & & & & & \cronocel & \\ \addlinespace[1.5pt]
+Manutenção do repositório reprodutível & \ref{oe:reprodutibilidade} & \cronocel & \cronocel & \cronocel & \cronocel & \cronocel & \cronocel & \cronocel \\ \addlinespace[1.5pt]
+Redação do relatório final & -- & & & & & \cronocel & \cronocel & \cronocel \\ \addlinespace[1.5pt]
+Preparação da apresentação e defesa & -- & & & & & & & \cronocel \\ \addlinespace[1.5pt]
+\bottomrule
+\end{tabularx}
+\end{table}
