@@ -1,7 +1,7 @@
 \chapter{Objetivos do trabalho}
 \label{cap:objetivos}
 
-Este capítulo descreve a solução proposta para a lacuna identificada na Seção~\ref{subsec:lacuna}, os objetivos que a orientam, o escopo e o público do sistema, e os itens que serão apresentados à banca ao final do Projeto Final II.
+Este capítulo descreve a solução proposta para a lacuna identificada na Seção~\ref{sec:lacuna}, os objetivos que a orientam, o escopo e o público do sistema, e os itens que serão apresentados à banca ao final do Projeto Final II.
 
 \section{Solução proposta}
 \label{sec:solucao}
@@ -136,15 +136,15 @@ O ambiente se destina a pesquisadores e a engenheiros responsáveis pelo planeja
 \section{Avanços em relação às soluções existentes}
 \label{sec:avancos}
 
-Os trabalhos de previsão comparam vários modelos, mas apenas por métricas de erro \cite{xu2022esdnn, rossi2023forecasting, agullo2025enhancing}, enquanto os que acoplam previsão e alocação usam um único previsor, comparado com políticas reativas \cite{calheiros2015arima, pan2023magicscaler} (Seção~\ref{sec:comparativo}). Em relação a esse cenário, o trabalho busca:
+Em relação à lacuna da Seção~\ref{sec:lacuna}, o trabalho busca:
 
 \begin{itemize}
-    \item \textbf{Comparação controlada:} previsores do ingênuo à rede neural sob a mesma política, simulador e dados, combinação ausente na Tabela~\ref{tab:comparativo}.
-    \item \textbf{Avaliação pelo custo a um mesmo nível de serviço:} com instâncias discretas e atraso de inicialização, o que capta a assimetria entre superestimar e subestimar a demanda, diferentemente de \citeonline{rossi2023forecasting}.
-    \item \textbf{Ligação explícita entre erro e custo:} a QP2 testa a hipótese, implícita na literatura e posta em dúvida por \citeonline{agullo2025enhancing}, de que menor erro implica melhor alocação.
+    \item \textbf{Comparação controlada:} previsores do ingênuo à rede neural sob a mesma política, simulador e dados.
+    \item \textbf{Custo a um mesmo nível de serviço:} com instâncias discretas e antecedência da decisão.
+    \item \textbf{Ligação entre erro e custo:} a QP2 testa se menor erro implica alocação mais barata.
 \end{itemize}
 
-\noindent Todo o experimento usa rastros públicos e código aberto, ao contrário de avaliações com dados privados \cite{pan2023magicscaler}. O trabalho não propõe uma nova arquitetura nem busca superar o estado da arte em erro de previsão: a GRU é deliberadamente simples. A contribuição está em medir o valor operacional da previsão.
+\noindent O trabalho não propõe uma nova arquitetura: a GRU é deliberadamente simples, e a contribuição está em medir o valor operacional da previsão com rastros públicos e código aberto.
 
 \section{Itens a serem implementados e apresentados à banca}
 \label{sec:entregaveis}
