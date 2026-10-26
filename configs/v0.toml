@@ -22,7 +22,6 @@ season_period = 288           # 1 dia em intervalos de 5 min
 arima_order = [2, 1, 2]
 
 [forecast.nn]
-# GRU univariada (spec 05). max_horizon precisa cobrir forecast.horizons e os L da simulação.
 window = 72                   # intervalos de histórico na entrada (6 h)
 max_horizon = 6               # a rede prevê h = 1..max_horizon de uma vez
 hidden_size = 32
@@ -41,8 +40,7 @@ cost_per_instance = 1.0
 lead_time = 1                 # L, em intervalos
 sensitivity_lead_times = [2]  # L extras, só para a figura de sensibilidade
 n_min = 1
-# Grade fina (passo 0,01), aprovada no G3: com a grade grossa original os degraus de custo eram
-# maiores que as diferenças entre previsores e decidiam sozinhos o ponto de operação.
+
 margins = [
     0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14,
     0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29,
@@ -56,7 +54,7 @@ hpa_targets = [
     0.80, 0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90, 0.91, 0.92, 0.93, 0.94,
     0.95, 0.96, 0.97, 0.98, 0.99
 ]
-sanity_hpa_targets = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]  # só para o sanity.md (G2)
+sanity_hpa_targets = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]  # só para o sanity.md
 hpa_tolerance = 0.1
 hpa_scale_down_window = 6     # intervalos
 epsilons = [0.01, 0.05]       # SLO de violação para os pontos de operação
