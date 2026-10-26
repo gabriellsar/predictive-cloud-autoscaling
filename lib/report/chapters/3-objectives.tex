@@ -57,7 +57,7 @@ V_{\mathrm{val}}(m) \leq \varepsilon,
 
 \noindent em que $C_{\mathrm{val}}$ e $V_{\mathrm{val}}$ são o custo e a fração de intervalos com violação na validação. O \textbf{ponto de operação} de um previsor para o limite $\varepsilon$ é a política preditiva com a margem $m^{*}(\varepsilon)$, medida no teste. Na política reativa, a escolha é a mesma, com a utilização-alvo $u^{*}$ no lugar de $m$; o dimensionamento estático e o oráculo são usados sem margem. Se nenhum valor da grade cumpre o limite na validação, a política não tem ponto de operação para aquele $\varepsilon$. Essa é a versão operacional da Equação~\ref{eq:problema}: como a restrição é verificada na validação, o teste nunca participa da escolha, e o ponto de operação pode ultrapassar $\varepsilon$ no teste.
 
-\textbf{Simulador e métricas.} Reproduz, intervalo a intervalo, um centro de dados com instâncias homogêneas, em que a decisão tomada em $\tau$ vale em $\tau + L$, e calcula as métricas da Seção~\ref{subsec:metricas}. No Projeto Final I, é um protótipo em Python; no Projeto Final II, o CloudSim Plus \cite{silvafilho2017cloudsimplus}, que recebe por arquivo as previsões geradas em Python.
+\textbf{Simulador e métricas.} Reproduz, intervalo a intervalo, a alocação de instâncias homogêneas, em que a decisão tomada em $\tau$ vale em $\tau + L$, e calcula as métricas da Seção~\ref{subsec:metricas}. É implementado em Python nos Projetos Finais I e II; se o cronograma permitir, um subconjunto dos experimentos será reproduzido no CloudSim Plus \cite{silvafilho2017cloudsimplus} como validação.
 
 A decisão metodológica central é manter a política de alocação \textbf{fixa} e variar apenas o previsor. Assim, qualquer diferença de custo ou de violações entre duas configurações pode ser atribuída à previsão, e não à regra de decisão.
 
@@ -67,7 +67,7 @@ A decisão metodológica central é manter a política de alocação \textbf{fix
 \subsection{Objetivo geral}
 \label{subsec:objetivo-geral}
 
-Avaliar, em um centro de dados simulado alimentado por rastros públicos, a redução de custo obtida pela alocação guiada por uma rede neural recorrente, em comparação com métodos tradicionais sob a mesma política e com uma política reativa, para limites fixos de violação de SLA.
+Avaliar, em um ambiente de simulação alimentado por rastros públicos, a redução de custo obtida pela alocação guiada por uma rede neural recorrente, em comparação com métodos tradicionais sob a mesma política e com uma política reativa, para limites fixos de violação de SLA.
 
 \subsection{Questões de pesquisa}
 \label{subsec:questoes}
@@ -110,14 +110,13 @@ A Tabela~\ref{tab:objetivos} lista os objetivos específicos (OE), as questões 
 \oelabel{OE1}{oe:dados} & \textbf{Dados:} agregar o rastro da Alibaba de 2018 em séries de 5 min, com lacunas tratadas e relatório de qualidade & -- & Implementado \\
 \oelabel{OE2}{oe:previsores} & \textbf{Previsores:} implementar os seis previsores e avaliar seu erro em cada horizonte & -- & Implementado \\
 \oelabel{OE3}{oe:simulador} & \textbf{Simulador e políticas:} implementar e testar o simulador e as políticas da Seção~\ref{sec:solucao} & -- & Protótipo em Python implementado \\
-\oelabel{OE4}{oe:cloudsim} & \textbf{CloudSim Plus:} reproduzir políticas e métricas no CloudSim Plus e usá-lo na avaliação final & -- & Previsto para o PF~II \\
-\oelabel{OE5}{oe:memoria} & \textbf{Memória:} incluir a memória como segundo recurso na alocação, com $n_t$ dado pelo maior entre os necessários para processador e para memória, e como entrada da GRU, comparada à GRU univariada & QP5 & Previsto para o PF~II \\
-\oelabel{OE6}{oe:custo} & \textbf{Custo e violações:} pontos de operação para $\varepsilon = 1\%$ e $5\%$ e curvas de custo contra violações & QP1, QP3 & Preliminar \\
-\oelabel{OE7}{oe:erro} & \textbf{Erro e custo:} confrontar o erro com $h = L$ e o custo no ponto de operação & QP2 & Preliminar \\
-\oelabel{OE8}{oe:sensibilidade} & \textbf{Sensibilidade:} efeito da antecedência $L$ sobre os pontos de operação & QP3 & Parcial ($L = 1$ e $L = 2$) \\
-\oelabel{OE9}{oe:robustez} & \textbf{Robustez:} várias sementes da GRU e várias janelas de teste, com média e dispersão & -- & Previsto para o PF~II \\
-\oelabel{OE10}{oe:replicacao} & \textbf{Replicação:} mesmo protocolo no rastro do Google de 2019, mudando só a leitura dos dados & QP4 & Previsto para o PF~II \\
-\oelabel{OE11}{oe:reprodutibilidade} & \textbf{Reprodutibilidade:} repositório público que regenera tabelas e figuras com um comando & -- & Implementado; a ser mantido \\
+\oelabel{OE4}{oe:memoria} & \textbf{Memória:} incluir a memória como segundo recurso na alocação, com $n_t$ dado pelo maior entre os necessários para processador e para memória, e como entrada da GRU, comparada à GRU univariada & QP5 & Previsto para o PF~II \\
+\oelabel{OE5}{oe:custo} & \textbf{Custo e violações:} pontos de operação para $\varepsilon = 1\%$ e $5\%$ e curvas de custo contra violações & QP1, QP3 & Preliminar \\
+\oelabel{OE6}{oe:erro} & \textbf{Erro e custo:} confrontar o erro com $h = L$ e o custo no ponto de operação & QP2 & Preliminar \\
+\oelabel{OE7}{oe:sensibilidade} & \textbf{Sensibilidade:} efeito da antecedência $L$ sobre os pontos de operação & QP3 & Parcial ($L = 1$ e $L = 2$) \\
+\oelabel{OE8}{oe:robustez} & \textbf{Robustez:} várias sementes da GRU e várias janelas de teste, com média e dispersão & -- & Previsto para o PF~II \\
+\oelabel{OE9}{oe:replicacao} & \textbf{Replicação:} mesmo protocolo no rastro do Google de 2019, mudando só a leitura dos dados & QP4 & Previsto para o PF~II \\
+\oelabel{OE10}{oe:reprodutibilidade} & \textbf{Reprodutibilidade:} repositório público que regenera tabelas e figuras com um comando & -- & Implementado; a ser mantido \\
 \bottomrule
 \end{tabularx}
 \end{table}

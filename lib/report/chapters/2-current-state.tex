@@ -175,7 +175,7 @@ O protótipo é escrito em Python 3.12, pela disponibilidade de bibliotecas para
 Dados & DuckDB \cite{raasveldt2019duckdb} & Agregação do rastro bruto (1,7~GB compactado) por consultas SQL, sem carregá-lo inteiro na memória \\
  & Parquet, pandas \cite{mckinney2010pandas} e NumPy \cite{harris2020numpy} & Armazenamento e manipulação das séries; previsores ingênuo, média móvel e sazonal ingênuo \\
 Previsão & statsmodels \cite{seabold2010statsmodels}; PyTorch \cite{paszke2019pytorch} para CPU & ARIMA e Holt-Winters; GRU, sem exigir GPU \\
-Simulação & Python (PF~I); CloudSim Plus \cite{silvafilho2017cloudsimplus} (PF~II) & Alocação intervalo a intervalo e métricas \\
+Simulação & Python; CloudSim Plus \cite{silvafilho2017cloudsimplus} como validação opcional (PF~II) & Alocação intervalo a intervalo e métricas \\
 Resultados & Matplotlib \cite{hunter2007matplotlib} & Figuras \\
 Ambiente & uv, Docker, Makefile, pytest, Git e GitHub & Dependências travadas, contêiner, encadeamento das etapas, testes e versionamento \\
 \bottomrule
