@@ -1,92 +1,61 @@
-\chapter{Plano de ação}
+\chapter{Revisão do Plano de Ação}
 \label{cap:plano-acao}
 
-Este capítulo revisa o plano de ação do Projeto Final I. A Seção~\ref{sec:plano-previsto} resume o que estava previsto, e a Seção~\ref{sec:atividades-realizadas} compara as atividades previstas com as realizadas. A Seção~\ref{sec:mudancas-plano} discute as mudanças de plano, a Seção~\ref{sec:dificuldades} relata as dificuldades encontradas e como foram contornadas, e a Seção~\ref{sec:resultados-preliminares} apresenta os resultados preliminares do protótipo.
+Este capítulo compara o plano do Projeto Final I com o que foi realizado (Seções~\ref{sec:plano-previsto} e~\ref{sec:atividades-realizadas}), discute as mudanças de plano e as dificuldades (Seções~\ref{sec:mudancas-plano} e~\ref{sec:dificuldades}), apresenta os resultados preliminares do protótipo (Seção~\ref{sec:resultados-preliminares}) e lista as pendências para o Projeto Final II (Seção~\ref{sec:pendencias}).
 
 \section{Plano previsto}
 \label{sec:plano-previsto}
 
-A proposta do trabalho previa avaliar a alocação preditiva com rastros públicos de dois \textit{clusters}, o da Alibaba \cite{alibaba2018trace} e o do Google \cite{wilkes2020google}, em um centro de dados simulado no CloudSim Plus \cite{silvafilho2017cloudsimplus}, comparando uma rede neural com métodos tradicionais de previsão e com uma política reativa (Seção~\ref{sec:escopo}).
-
-Para o Projeto Final I, a meta foi um protótipo de ponta a ponta que servisse de evidência de viabilidade: partir do rastro bruto da Alibaba e chegar às curvas de custo contra violações, primeiro com previsores tradicionais e, na etapa seguinte, com a rede neural. A construção foi dividida em fases curtas, cada uma com uma especificação, um critério de aceite e um prazo máximo, e com pontos de verificação ao fim das fases de ambiente, dados, simulador e experimento, em que os resultados eram conferidos antes de seguir. A Tabela~\ref{tab:fases} resume as fases, com o prazo reservado para cada uma e a data em que foi concluída. A entrega do protótipo estava prevista para 21/10/2026.
-
-\begin{table}[htbp]
-\centering
-\caption{Fases previstas para a construção do protótipo no Projeto Final I e datas de conclusão, em 2026.}
-\label{tab:fases}
-\footnotesize
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}X >{\centering\arraybackslash}p{1.7cm} >{\centering\arraybackslash}p{2.2cm}}
-\toprule
-\textbf{Fase} & \textbf{Entrega prevista} & \textbf{Conclusão} \\
-\midrule
-Ambiente & Projeto com dependências travadas, contêiner e testes de fumaça & 14/10 \\
-Dados & Série de demanda de cinco minutos e relatório de qualidade & 15/10, com revisão em 21/10 \\
-Previsores tradicionais & Cinco previsores, avaliação com origem móvel e tabela de erros & 15/10 \\
-Simulador & Simulador, políticas, métricas, testes e verificações de sanidade & 15/10 \\
-Experimento & Curvas de custo contra violações, pontos de operação e relato ao orientador & 16/10, com revisão em 20/10 \\
-Rede neural & Previsor GRU com a mesma interface dos demais & 20/10 \\
-\bottomrule
-\end{tabularx}
-\end{table}
+A proposta do trabalho previa avaliar a alocação preditiva com os rastros públicos da Alibaba \cite{alibaba2018trace} e do Google \cite{wilkes2020google}, em um centro de dados simulado no CloudSim Plus \cite{silvafilho2017cloudsimplus}, comparando uma rede neural com métodos tradicionais de previsão e com uma política reativa (Seção~\ref{sec:escopo}). Para o Projeto Final I, a meta foi um protótipo de ponta a ponta que servisse de evidência de viabilidade: partir do rastro bruto da Alibaba e chegar às curvas de custo contra violações, primeiro com previsores tradicionais e, na etapa seguinte, com a rede neural. A construção foi dividida em fases curtas, cada uma com uma especificação, um critério de aceite e uma duração reservada, e com pontos de verificação ao fim das fases de ambiente, dados, simulador e experimento. As fases, a duração prevista e as datas de conclusão estão na Tabela~\ref{tab:cronograma-pf1}; a entrega do protótipo estava prevista para 21/10/2026.
 
 \section{Atividades realizadas}
 \label{sec:atividades-realizadas}
 
-Todas as fases previstas foram concluídas dentro do prazo, e a rede neural, que estava prevista para a etapa seguinte, foi antecipada. As datas da Tabela~\ref{tab:fases} vêm do histórico de versões do repositório do projeto \cite{rosas2026repo}. Em relação aos objetivos específicos da Seção~\ref{subsec:objetivos-especificos}, foi realizado o seguinte.
+Todas as fases foram concluídas dentro do prazo, e a rede neural, prevista para a semana seguinte, foi antecipada. As datas vêm do histórico de versões do repositório \cite{rosas2026repo}, e a situação de cada objetivo específico está na Tabela~\ref{tab:objetivos}.
 
-\textbf{Dados (\ref{oe:dados}).} A tabela de uso por máquina do rastro da Alibaba, com 246.934.820 linhas, foi agregada em uma série de 2.304 intervalos de cinco minutos, que cobre os oito dias do rastro e as $M = 4.023$ máquinas (Figura~\ref{fig:serie}). A fração das máquinas que enviam medições, chamada aqui de cobertura, varia ao longo do rastro: na validação e no teste, ela é de pelo menos 97,8\% em todos os intervalos; no treino, que contém o início do rastro, a média é de 88,6\% e a mínima, de 53,7\%. Um apagão de coleta deixou no treino uma lacuna de 65 intervalos, cerca de 5,4~h, preenchida como descrito na Seção~\ref{sec:mudancas-plano}. A divisão cronológica resultou em 1.382 intervalos de treino, 460 de validação e 462 de teste.
+A tabela de uso por máquina do rastro da Alibaba, com 246.934.820 linhas, foi agregada em uma série de 2.304 intervalos de cinco minutos, que cobre os oito dias do rastro e as $M = 4.023$ máquinas. A Figura~\ref{fig:serie} mostra a série com a divisão cronológica, o trecho preenchido, em tracejado, e, no painel inferior, a cobertura, isto é, a fração das $M$ máquinas que enviaram medições em cada intervalo; abaixo da linha pontilhada, o intervalo é tratado como lacuna. Na validação e no teste, a cobertura é de pelo menos 97,8\% em todos os intervalos; no treino, que contém o início do rastro, a média é de 88,6\% e a mínima, de 53,7\%. Um apagão de coleta deixou no treino uma lacuna de 65 intervalos, cerca de 5,4~h, preenchida como descrito na Seção~\ref{sec:mudancas-plano}. A divisão cronológica resultou em 1.382 intervalos de treino, 460 de validação e 462 de teste.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\textwidth]{figures/series_full.png}
-\caption{Demanda de processador do \textit{cluster} nos oito dias do rastro, em intervalos de cinco minutos, com a divisão cronológica. O trecho tracejado é a lacuna de coleta preenchida. O painel inferior mostra a cobertura, isto é, a fração das $M$ máquinas que enviaram medições em cada intervalo; abaixo da linha pontilhada, o intervalo é tratado como lacuna.}
+\includegraphics[width=0.85\textwidth]{figures/series_full.png}
+\caption{Demanda de processador e cobertura do rastro da Alibaba.}
 \label{fig:serie}
 \end{figure}
 
-\textbf{Previsores (\ref{oe:previsores}).} Os cinco métodos tradicionais e a GRU foram implementados com a mesma interface e avaliados com origem móvel (\textit{walk-forward}): cada previsão usa apenas os dados até a sua origem, e a origem avança um intervalo por vez sobre a validação e o teste, com 460 e 462 origens, respectivamente, para os horizontes de 1, 2, 3 e 6 intervalos. Testes automatizados verificam, para cada previsor, que alterar os dados posteriores à origem não muda nenhuma previsão.
-
-\textbf{Simulador e políticas (\ref{oe:simulador}).} O protótipo do simulador implementa a antecedência $L$, as quatro políticas (preditiva, reativa, dimensionamento estático e oráculo) e as métricas da Seção~\ref{subsec:metricas}, com testes automatizados de casos calculados à mão e verificações de sanidade. Uma delas confirma que o oráculo não viola o SLA em nenhum intervalo, como esperado.
-
-\textbf{Experimentos (\ref{oe:custo} a \ref{oe:sensibilidade}).} A varredura das grades de $m$ e de $u^{*}$ gerou as curvas de custo contra violações e os pontos de operação para $\varepsilon = 1\%$ e $5\%$, com $L = 1$, e a simulação foi repetida com $L = 2$ para uma primeira análise de sensibilidade. Os resultados estão na Seção~\ref{sec:resultados-preliminares}.
-
-\textbf{Reprodutibilidade (\ref{oe:reprodutibilidade}).} Todo o \textit{pipeline}, do arquivo bruto às tabelas e figuras, roda com um único comando, e duas execuções completas seguidas produzem arquivos idênticos byte a byte.
+Os previsores foram avaliados com origem móvel (\textit{walk-forward}), com 460 origens na validação e 462 no teste, e testes automatizados verificam, para cada um, que alterar os dados posteriores à origem não muda nenhuma previsão. O simulador tem testes de casos calculados à mão e verificações de sanidade, entre elas a de que o oráculo não viola nenhum intervalo. Todo o \textit{pipeline} roda com um único comando, e duas execuções completas seguidas produzem arquivos idênticos byte a byte.
 
 \section{Mudanças em relação ao plano}
 \label{sec:mudancas-plano}
 
-\textbf{Simulador.} A proposta previa o CloudSim Plus desde o início. No Projeto Final I, o protótipo usou um simulador próprio, em Python, por três motivos. Primeiro, a decisão estudada se resume a escolher $n_t$ a cada intervalo, a partir da demanda agregada, o que um simulador pequeno, em tempo discreto, representa diretamente, sem modelar a execução de tarefas nem o posicionamento de máquinas virtuais. Segundo, manter previsão e simulação na mesma linguagem permitiu iterar rapidamente sobre o protocolo experimental. Terceiro, o simulador pôde ser coberto por testes automatizados e conferido intervalo a intervalo, o que ajudou a garantir que as diferenças entre previsores não fossem artefatos da simulação. A escolha é temporária: no Projeto Final II, o CloudSim Plus substitui o protótipo na avaliação final (\ref{oe:cloudsim}).
+\textbf{Simulador.} A proposta previa o CloudSim Plus desde o início, mas o protótipo usou um simulador próprio, em Python, por três motivos. Primeiro, a decisão estudada se resume a escolher $n_t$ a cada intervalo, a partir da demanda agregada, o que um simulador pequeno, em tempo discreto, representa diretamente, sem modelar a execução de tarefas nem o posicionamento de máquinas virtuais. Segundo, manter previsão e simulação na mesma linguagem permitiu iterar rapidamente sobre o protocolo experimental. Terceiro, o simulador pôde ser coberto por testes automatizados e conferido intervalo a intervalo, o que ajudou a garantir que as diferenças entre previsores não fossem artefatos da simulação. A escolha é temporária: no Projeto Final II, o CloudSim Plus substitui o protótipo na avaliação final (\ref{oe:cloudsim}).
 
-\textbf{Rede neural antecipada.} O plano deixava a rede neural para depois do protótipo com previsores tradicionais. Como a interface comum de previsores já estava pronta, a GRU entrou como mais um previsor ainda no Projeto Final I, sem nenhuma alteração na política ou no simulador. Por simplicidade, ela é univariada e usa apenas a demanda de processador; a memória fica para o Projeto Final II (Seção~\ref{sec:escopo-sistema}).
+\textbf{Rede neural antecipada.} Como a interface comum de previsores já estava pronta, a GRU entrou ainda no Projeto Final I como mais um previsor, sem nenhuma alteração na política ou no simulador. Por simplicidade, ela é univariada (Seção~\ref{sec:escopo-sistema}).
 
-\textbf{Rastro completo.} A primeira versão do protótipo descartava o início do rastro, que tem um regime de coleta diferente, com cobertura de máquinas bem menor, e um apagão de coleta dentro do conjunto de treino: dos 2.304 intervalos, restavam 1.769, uma perda de 23\% da série, e o teste ficava com 355 intervalos. A versão final usa o rastro inteiro. Os intervalos em que menos da metade das máquinas enviou medições são tratados como lacuna. As lacunas de até três intervalos são interpoladas linearmente, e a única lacuna maior, a do apagão, é preenchida com a demanda do mesmo horário do dia anterior, somada a uma correção que varia linearmente entre as diferenças observadas nas duas bordas; assim, o trecho preenchido mantém a forma do ciclo diário e coincide com a demanda observada nas bordas. Como esse preenchimento usa a borda posterior à lacuna, o protótipo só o aceita quando todos os dados usados estão no treino, o que garante que nenhuma previsão da validação ou do teste use dados posteriores à sua origem. Os intervalos preenchidos entram no ajuste dos previsores, mas não nas estatísticas descritivas nem nas métricas. O ganho é um teste 30\% maior, com 462 intervalos; o custo é que, no início do treino, a demanda é extrapolada a partir de uma fração menor das máquinas (Figura~\ref{fig:serie}).
+\textbf{Rastro completo.} A primeira versão descartava o início do rastro, que tem cobertura menor e um apagão de coleta, e ficava com 1.769 dos 2.304 intervalos e um teste de 355. A versão final usa o rastro inteiro: os intervalos com menos da metade das máquinas são lacunas, as de até três intervalos são interpoladas linearmente, e a do apagão é preenchida com a demanda do mesmo horário do dia anterior, corrigida linearmente para coincidir com a demanda observada nas duas bordas. Como esse preenchimento usa a borda posterior, o protótipo só o aceita quando todos os dados usados estão no treino, o que garante que nenhuma previsão da validação ou do teste use dados posteriores à sua origem; os intervalos preenchidos entram no ajuste dos previsores, mas não nas métricas. O teste ficou 30\% maior, ao custo de extrapolar a demanda do início do treino a partir de menos máquinas.
 
-\textbf{Grade de parâmetros.} A grade inicial de margens tinha passos de cinco a 20 pontos percentuais, que geravam degraus de custo maiores que as diferenças entre previsores, de modo que o ponto de operação era decidido pelo degrau da grade, e não pelo previsor. Com os dados atuais, essa grade levaria o ARIMA e o método ingênuo à mesma margem em $\varepsilon = 1\%$, com custos praticamente iguais, e faria o ARIMA parecer 7,5\% mais barato em $\varepsilon = 5\%$. Com a grade fina adotada, de passo 0,01 em $m$ e em $u^{*}$ (Tabela~\ref{tab:parametros}), as diferenças são de 4,3\% e 2,4\%, respectivamente.
-
-\textbf{Escopo adiado.} A replicação no rastro do Google (\ref{oe:replicacao}), a avaliação com várias sementes e janelas de teste (\ref{oe:robustez}) e a incorporação da memória ficaram para o Projeto Final II.
+\textbf{Grade de parâmetros.} A grade inicial de margens, com passos de 5 a 20 pontos percentuais, gerava degraus de custo maiores que as diferenças entre previsores, de modo que o ponto de operação era decidido pelo degrau, e não pelo previsor: com os dados atuais, ela levaria o ARIMA e o método ingênuo à mesma margem em $\varepsilon = 1\%$ e faria o ARIMA parecer 7,5\% mais barato que o ingênuo em $\varepsilon = 5\%$. Com a grade de passo 0,01 (Tabela~\ref{tab:parametros}), o ARIMA fica 4,3\% e 2,4\% mais barato que o ingênuo, respectivamente.
 
 \section{Dificuldades encontradas}
 \label{sec:dificuldades}
 
-\textbf{Holt-Winters.} O modelo ajustado pela biblioteca statsmodels não permite aplicar os parâmetros estimados a dados novos, e reajustá-lo em cada uma das centenas de origens da avaliação seria lento demais. A solução foi estimar os parâmetros no treino com a biblioteca e implementar a recursão do método no próprio previsor. Um teste automatizado confirma que ela reproduz os valores ajustados pela biblioteca até a precisão de máquina.
+\textbf{Holt-Winters.} O modelo ajustado pela biblioteca statsmodels não permite aplicar os parâmetros estimados a dados novos, e reajustá-lo em cada uma das centenas de origens da avaliação seria lento demais. A solução foi estimar os parâmetros no treino com a biblioteca e implementar a recursão do método no próprio previsor; um teste automatizado confirma que ela reproduz os valores da biblioteca até a precisão de máquina.
 
-\textbf{Ponto flutuante.} Três problemas tiveram a mesma origem. Primeiro, o oráculo aparecia com violações inexistentes, porque $k \cdot \lceil d_t / k \rceil$ pode ficar ligeiramente abaixo de $d_t$ por erro de arredondamento; a comparação entre demanda e capacidade passou a usar uma tolerância relativa de $10^{-9}$. Segundo, o arredondamento para cima do número de instâncias saltava para o inteiro seguinte quando o valor exato era inteiro, o que dava uma instância a mais em parte das configurações do dimensionamento estático; o arredondamento passou a usar a mesma tolerância. Terceiro, a soma paralela feita pelo DuckDB na agregação variava na última casa decimal entre execuções e propagava a diferença aos resultados; a série passou a ser gravada com seis casas decimais, e as execuções passaram a gerar arquivos idênticos.
+\textbf{Ponto flutuante e memória.} Três problemas tiveram origem no ponto flutuante: o oráculo aparecia com violações inexistentes, porque $k \cdot \lceil d_t / k \rceil$ pode ficar ligeiramente abaixo de $d_t$; o arredondamento para cima do número de instâncias saltava para o inteiro seguinte quando o valor exato era inteiro; e a soma paralela do DuckDB variava na última casa decimal entre execuções. As comparações e os arredondamentos passaram a usar uma tolerância relativa de $10^{-9}$, e a série passou a ser gravada com seis casas decimais. Além disso, a agregação do rastro ocupa cerca de 14~GB de memória e, em contêineres limitados a 4 ou 8~GB, roda fora do contêiner.
 
-\textbf{Memória na agregação.} A agregação do rastro chega a ocupar cerca de 14~GB de memória e não terminou em contêineres limitados a 4 ou 8~GB. Nesses ambientes, a etapa de dados roda fora do contêiner, e as demais etapas continuam dentro dele.
+\textbf{Expectativas que não se confirmaram.} A primeira era que o oráculo teria o menor custo possível: a política preditiva com o sazonal ingênuo e sem margem tem $C_{\mathrm{norm}} = 0{,}900$, mas viola em 64,9\% dos intervalos do teste; o oráculo é, portanto, o piso do custo sem violações (Seção~\ref{subsec:metricas}). A segunda era que a política reativa sempre violaria por causa da antecedência: com $u^{*} \leq 0{,}75$, ela não viola nenhum intervalo do teste, porque a folga de $1/u^{*} - 1$, de pelo menos 33\%, cobre a variação da demanda em um intervalo.
 
-\textbf{Expectativas que não se confirmaram.} Duas suposições do plano foram desmentidas pelos dados. A primeira era que o oráculo teria o menor custo possível: a política preditiva com o sazonal ingênuo e sem margem tem $C_{\mathrm{norm}} = 0{,}900$, mas viola em 64,9\% dos intervalos do teste. O oráculo é, portanto, o piso do custo sem violações, como definido na Seção~\ref{subsec:metricas}. A segunda era que a política reativa sempre violaria por causa da antecedência: com $u^{*} \leq 0{,}7$, ela não viola nenhum intervalo do teste, porque a folga de $1/u^{*} - 1$, de pelo menos 43\%, cobre a variação da demanda em um intervalo.
-
-\textbf{Tamanho do teste.} Com 462 intervalos, um intervalo com violação vale 0,22 ponto percentual de $V$, e a diferença entre cumprir ou não $\varepsilon = 1\%$ no teste é de um único intervalo. O uso do rastro completo aumentou o teste, mas não mudou a ordem de grandeza do problema. Essa limitação motiva a avaliação com várias janelas de teste prevista para o Projeto Final II (\ref{oe:robustez}).
+\textbf{Tamanho do teste.} Com 462 intervalos, um intervalo com violação vale 0,22 ponto percentual de $V$, e a diferença entre cumprir ou não $\varepsilon = 1\%$ no teste é de um único intervalo. O uso do rastro completo aumentou o teste, mas não mudou a ordem de grandeza do problema, o que motiva a avaliação com várias janelas de teste (\ref{oe:robustez}).
 
 \section{Resultados preliminares}
 \label{sec:resultados-preliminares}
 
-Os resultados desta seção vêm do protótipo, com o rastro da Alibaba, $L = 1$ e os parâmetros da Tabela~\ref{tab:parametros}. Os parâmetros das políticas foram escolhidos na validação (Equação~\ref{eq:calibracao}) e medidos no teste, que não participa de nenhuma escolha. Os resultados são preliminares porque usam uma única janela de teste e uma única semente de treinamento da GRU.
+Os resultados desta seção vêm do protótipo, com o rastro da Alibaba e os parâmetros da Tabela~\ref{tab:parametros}. Os parâmetros das políticas foram escolhidos na validação (Equação~\ref{eq:calibracao}) e medidos no teste, que não participa de nenhuma escolha. Os resultados são preliminares porque usam uma única janela de teste e uma única semente de treinamento da GRU.
 
-A Tabela~\ref{tab:erro-previsao} mostra o erro das previsões no teste para o horizonte usado na alocação, $h = L = 1$. O ARIMA tem o menor erro, seguido da GRU, com RMSE 3,1\% maior. Os vieses do ARIMA, do Holt-Winters, do método ingênuo e da média móvel são pequenos perto do RMSE, entre $-1{,}13$ e $+3{,}01$. A GRU superestima a demanda em média, com viés de $+17{,}59$, e fica abaixo do valor real em apenas 39,4\% das origens. Na alocação, a subestimação vira violação e precisa ser compensada pela margem, e a superestimação vira ociosidade. O sazonal ingênuo é o pior por larga margem: ele repete o valor de um dia antes e não acompanha as variações de curto prazo nem as mudanças de nível entre os dias, e subestima a demanda em 66,9\% das origens do teste.
+A Tabela~\ref{tab:erro-previsao} mostra o erro das previsões no teste para o horizonte usado na alocação, $h = L = 1$, com RMSE, MAE e viés em máquinas equivalentes e viés positivo indicando superestimação. O ARIMA tem o menor erro, seguido da GRU, com RMSE 3,1\% maior. Os vieses do ARIMA, do Holt-Winters, do ingênuo e da média móvel são pequenos perto do RMSE, entre $-1{,}13$ e $+3{,}01$, enquanto a GRU superestima a demanda em média, com viés de $+17{,}59$, e fica abaixo do valor real em apenas 39,4\% das origens. O sazonal ingênuo é o pior por larga margem: repete o valor de um dia antes, não acompanha as variações de curto prazo e subestima a demanda em 66,9\% das origens.
 
 \begin{table}[htbp]
 \centering
-\caption{Erro das previsões no conjunto de teste com horizonte $h = 1$, em 462 origens. RMSE, MAE e viés estão em máquinas equivalentes; viés positivo indica superestimação.}
+\caption{Erro das previsões no teste com $h = 1$.}
 \label{tab:erro-previsao}
 \footnotesize
 \begin{tabular}{lrrrr}
@@ -103,18 +72,18 @@ Sazonal ingênuo & 360,90 & 291,42 & $-166{,}41$ & 66,9\% \\
 \end{tabular}
 \end{table}
 
-A Figura~\ref{fig:pareto} mostra as curvas completas de custo contra violações no teste, e a Tabela~\ref{tab:pontos-operacao}, os pontos de operação de cada política. Cinco observações se destacam.
+A Figura~\ref{fig:pareto} mostra as curvas de custo contra violações no teste. Cada curva varia o parâmetro de uma política, $m$ na preditiva e $u^{*}$ na reativa; as linhas verticais marcam $\varepsilon = 1\%$ e $5\%$, o eixo horizontal é linear até 1\% e logarítmico a partir daí, e, na legenda, \textit{naive} designa o método ingênuo. A Tabela~\ref{tab:pontos-operacao} traz os pontos de operação de cada política. Cinco observações se destacam.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/pareto_cost_violation.png}
-\caption{Custo normalizado pelo do oráculo contra a fração de intervalos com violação no conjunto de teste, com $L = 1$. Cada curva varia o parâmetro de uma política ($m$ na preditiva e $u^{*}$ na reativa), e as linhas verticais marcam $\varepsilon = 1\%$ e $5\%$. O eixo horizontal é linear até 1\% e logarítmico a partir daí. Na legenda, \textit{naive} designa o método ingênuo.}
+\caption{Custo normalizado contra fração de intervalos com violação no teste, com $L = 1$.}
 \label{fig:pareto}
 \end{figure}
 
 \begin{table}[htbp]
 \centering
-\caption{Pontos de operação no conjunto de teste, com $L = 1$. O parâmetro de cada política foi escolhido na validação (Equação~\ref{eq:calibracao}). Valores de $V$ em negrito ultrapassam $\varepsilon$ no teste.}
+\caption{Pontos de operação no teste, com $L = 1$.}
 \label{tab:pontos-operacao}
 \footnotesize
 \begin{tabular}{lcrrcrr}
@@ -134,16 +103,33 @@ Preditiva com média móvel & $m = 0{,}36$ & 1,354 & 0,43\% & $m = 0{,}24$ & 1,2
 Preditiva com sazonal ingênuo & $m = 0{,}42$ & 1,270 & \textbf{13,64\%} & $m = 0{,}23$ & 1,103 & \textbf{33,55\%} \\
 \bottomrule
 \end{tabular}
+
+\smallskip
+\parbox{\textwidth}{\footnotesize Nota: parâmetros escolhidos na validação (Equação~\ref{eq:calibracao}); valores de $V$ em negrito ultrapassam $\varepsilon$ no teste.}
 \end{table}
 
-\textbf{A previsão reduz muito o custo em relação ao dimensionamento estático e pouco em relação à política reativa.} Em $\varepsilon = 5\%$, a política preditiva com o ARIMA tem $C_{\mathrm{norm}} = 1{,}176$, contra 1,830 do dimensionamento estático, uma redução de 35,7\%, e 1,197 da reativa, uma redução de 1,7\%. Em $\varepsilon = 1\%$, a GRU tem $C_{\mathrm{norm}} = 1{,}287$, 3,9\% abaixo da reativa, que ainda ultrapassa o limite no teste.
+\textbf{A previsão reduz muito o custo em relação ao dimensionamento estático e pouco em relação à política reativa.} Em $\varepsilon = 5\%$, a política preditiva com o ARIMA tem $C_{\mathrm{norm}} = 1{,}176$, 35,7\% abaixo do dimensionamento estático (1,830) e 1,7\% abaixo da reativa (1,197). Em $\varepsilon = 1\%$, a GRU tem $C_{\mathrm{norm}} = 1{,}287$, 3,9\% abaixo da reativa, que ainda ultrapassa o limite no teste.
 
-\textbf{A GRU é competitiva com o ARIMA, sem vantagem clara.} A diferença de custo entre os dois fica em torno de 2\% nos dois limites, em sentidos opostos: a GRU é mais barata em $\varepsilon = 1\%$, com 1,287 contra 1,315 e o mesmo número de intervalos com violação no teste, e o ARIMA é mais barato em $\varepsilon = 5\%$, com 1,176 contra 1,199. Como a escolha do parâmetro e a medida no teste dependem de poucos intervalos com violação (Seção~\ref{sec:dificuldades}), diferenças desse tamanho não permitem afirmar que um previsor é melhor que o outro.
+\textbf{A GRU é competitiva com o ARIMA, sem vantagem clara.} A diferença de custo entre os dois fica em torno de 2\% e muda de sentido entre os limites: a GRU é mais barata em $\varepsilon = 1\%$, com 1,287 contra 1,315 e o mesmo número de intervalos com violação, e o ARIMA em $\varepsilon = 5\%$, com 1,176 contra 1,199. Como a escolha e a medida dependem de poucos intervalos com violação (Seção~\ref{sec:dificuldades}), diferenças desse tamanho não permitem afirmar que um previsor é melhor que o outro.
 
-\textbf{Menor erro de previsão não garante menor custo.} O Holt-Winters tem o quarto menor RMSE (Tabela~\ref{tab:erro-previsao}), mas, em $\varepsilon = 1\%$, é o previsor mais caro entre os que cumprem o limite no teste, acima da média móvel, cujo RMSE é 8\% maior. Em $\varepsilon = 5\%$, ao contrário, ele é o segundo mais barato, à frente da GRU e do método ingênuo, que têm RMSE menor. Esse resultado antecipa a resposta à QP2 e sugere que o que pesa na alocação é o erro nas subidas da demanda, e não o erro médio.
+\textbf{Menor erro de previsão não garante menor custo.} O Holt-Winters tem o quarto menor RMSE, mas, em $\varepsilon = 1\%$, é o mais caro entre os que cumprem o limite no teste, acima da média móvel, cujo RMSE é 8\% maior; em $\varepsilon = 5\%$, ao contrário, é o segundo mais barato, à frente da GRU e do ingênuo, que têm RMSE menor. Esse resultado antecipa a resposta à QP2 e sugere que o que pesa na alocação é o erro nas subidas da demanda, e não o erro médio.
 
-\textbf{A calibração na validação falha quando a demanda muda de comportamento entre os conjuntos.} O sazonal ingênuo, que tem o pior erro, aparece com o menor custo nos dois limites, mas só porque viola em 13,6\% e 33,5\% dos intervalos do teste, muito acima de $\varepsilon$. Para esse previsor, o viés com $h = 1$ é a diferença média entre a demanda de um dia antes e a atual: ele passa de $+96{,}08$ na validação, em que a demanda cai em relação ao dia anterior, para $-166{,}41$ no teste, em que ela sobe, e a margem escolhida na validação deixa de cobrir a subestimação. Os previsores que acompanham a demanda recente cumprem os dois limites no teste, mas o caso mostra que calibrar a margem em uma única janela supõe que o erro tem a mesma distribuição na validação e no teste.
+\textbf{A calibração na validação falha quando a demanda muda de comportamento entre os conjuntos.} O sazonal ingênuo, de pior erro, tem o menor custo nos dois limites só porque viola em 13,6\% e 33,5\% dos intervalos do teste. Seu viés com $h = 1$, a diferença média entre a demanda de um dia antes e a atual, passa de $+96{,}08$ na validação, em que a demanda cai em relação ao dia anterior, para $-166{,}41$ no teste, em que ela sobe, e a margem escolhida na validação deixa de cobrir a subestimação. Calibrar a margem em uma única janela supõe que o erro tem a mesma distribuição na validação e no teste.
 
-\textbf{A política reativa muda de tamanho com muito menos frequência.} Nos pontos de operação, ela altera o número de instâncias 116 vezes no teste, contra 326 a 411 vezes das políticas preditivas, com exceção da média móvel, com 282 a 284. Como o modelo de custo não cobra pelas alterações, essa vantagem da reativa não aparece em $C$.
+\textbf{A política reativa muda de tamanho com muito menos frequência.} Nos pontos de operação, ela altera o número de instâncias 116 vezes no teste, contra 326 a 411 vezes das políticas preditivas, exceto a média móvel, com 282 a 284. Como o modelo de custo não cobra pelas alterações, essa vantagem da reativa não aparece em $C$.
 
 Com $L = 2$, as violações aumentam, em média sobre a grade de parâmetros, em todas as políticas que dependem da demanda recente. O aumento é maior nas políticas preditivas com o método ingênuo (8,0 intervalos com violação a mais no teste), o Holt-Winters (7,8), o ARIMA (5,4) e a GRU (5,1) do que na reativa (4,2); a média móvel fica abaixo da reativa (3,8), e o sazonal ingênuo não muda, porque sua previsão não depende do horizonte. Por fim, três dos 16 pontos de operação que não são do oráculo ultrapassam $\varepsilon$ no teste: o da reativa em $\varepsilon = 1\%$, por um intervalo, e os dois do sazonal ingênuo, por larga margem, o que reforça a necessidade da avaliação com várias janelas de teste no Projeto Final II.
+
+\section{Pendências para o Projeto Final II}
+\label{sec:pendencias}
+
+Cada pendência corresponde a uma atividade da Tabela~\ref{tab:cronograma-pf2}, indicada entre parênteses:
+
+\begin{itemize}
+    \item reproduzir as políticas e as métricas no CloudSim Plus e usá-lo na avaliação final, \ref{oe:cloudsim} (Simulação no CloudSim Plus);
+    \item incorporar a memória como segundo recurso na alocação e como entrada da GRU (Incorporação da memória);
+    \item aplicar o protocolo ao rastro do Google, \ref{oe:replicacao} (Replicação no rastro do Google);
+    \item definir e executar a avaliação com várias sementes e janelas de teste e o critério estatístico de comparação, \ref{oe:robustez} (Várias sementes e janelas de teste);
+    \item refazer os experimentos de custo, violações e erro contra custo, hoje preliminares, \ref{oe:custo} e \ref{oe:erro} (Experimentos finais);
+    \item estender a análise de sensibilidade além de $L = 1$ e $L = 2$, \ref{oe:sensibilidade} (Sensibilidade à antecedência $L$).
+\end{itemize}
