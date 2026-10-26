@@ -1,0 +1,89 @@
+\begin{table}[htbp]
+\centering
+\caption{Erro das previsões na validação, por horizonte $h$.}
+\label{tab:erro-horizonte-val}
+\footnotesize
+\begin{tabular}{lcrrrrr}
+\toprule
+\textbf{Previsor} & $h$ & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE (\%)} & \textbf{Viés} & \textbf{Taxa de subestimação} \\
+\midrule
+ARIMA & 1 & 164,10 & 122,91 & 8,35 & $-4{,}51$ & 47,4\% \\
+ & 2 & 199,70 & 146,58 & 9,87 & $-8{,}04$ & 47,0\% \\
+ & 3 & 216,01 & 158,14 & 10,58 & $-10{,}65$ & 48,0\% \\
+ & 6 & 245,61 & 174,89 & 11,62 & $-16{,}76$ & 49,4\% \\
+\addlinespace
+GRU & 1 & 167,32 & 126,06 & 8,77 & $+10{,}11$ & 39,6\% \\
+ & 2 & 198,43 & 150,03 & 10,44 & $+8{,}66$ & 40,0\% \\
+ & 3 & 213,01 & 160,85 & 11,22 & $+10{,}21$ & 40,0\% \\
+ & 6 & 239,02 & 177,00 & 12,35 & $+2{,}38$ & 42,4\% \\
+\addlinespace
+Ingênuo & 1 & 174,68 & 131,38 & 8,97 & $-1{,}38$ & 48,3\% \\
+ & 2 & 219,60 & 162,99 & 10,99 & $-3{,}29$ & 47,8\% \\
+ & 3 & 238,43 & 174,84 & 11,72 & $-5{,}30$ & 49,6\% \\
+ & 6 & 270,07 & 188,58 & 12,63 & $-11{,}72$ & 50,4\% \\
+\addlinespace
+Holt-Winters & 1 & 178,97 & 132,96 & 9,19 & $+0{,}72$ & 51,1\% \\
+ & 2 & 220,68 & 161,36 & 11,16 & $+1{,}06$ & 50,9\% \\
+ & 3 & 236,05 & 172,30 & 11,96 & $+1{,}73$ & 51,3\% \\
+ & 6 & 235,93 & 177,68 & 12,42 & $+3{,}92$ & 51,3\% \\
+\addlinespace
+Média móvel & 1 & 194,53 & 142,77 & 9,62 & $-6{,}29$ & 48,9\% \\
+ & 2 & 213,92 & 156,22 & 10,49 & $-8{,}22$ & 49,4\% \\
+ & 3 & 227,35 & 164,91 & 11,06 & $-10{,}02$ & 50,6\% \\
+ & 6 & 253,98 & 180,73 & 11,94 & $-14{,}78$ & 49,4\% \\
+\addlinespace
+Sazonal ingênuo & 1 & 295,52 & 222,57 & 15,89 & $+96{,}08$ & 34,4\% \\
+ & 2 & 295,52 & 222,57 & 15,89 & $+96{,}08$ & 34,4\% \\
+ & 3 & 295,52 & 222,57 & 15,89 & $+96{,}08$ & 34,4\% \\
+ & 6 & 295,52 & 222,57 & 15,89 & $+96{,}08$ & 34,4\% \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+\parbox{\textwidth}{\footnotesize Nota: RMSE, MAE e viés em máquinas equivalentes; viés positivo indica superestimação. Cada linha usa as mesmas 460 origens, e a máscara do MAPE não excluiu nenhuma. O sazonal ingênuo repete o valor de um dia antes e, por isso, não depende de $h$.}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Erro das previsões no teste, por horizonte $h$.}
+\label{tab:erro-horizonte-test}
+\footnotesize
+\begin{tabular}{lcrrrrr}
+\toprule
+\textbf{Previsor} & $h$ & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE (\%)} & \textbf{Viés} & \textbf{Taxa de subestimação} \\
+\midrule
+ARIMA & 1 & 157,44 & 120,25 & 7,45 & $+1{,}75$ & 42,9\% \\
+ & 2 & 190,36 & 143,76 & 8,95 & $+3{,}15$ & 45,7\% \\
+ & 3 & 206,16 & 157,83 & 9,88 & $+4{,}24$ & 45,5\% \\
+ & 6 & 234,88 & 178,64 & 11,13 & $+6{,}15$ & 45,9\% \\
+\addlinespace
+GRU & 1 & 162,26 & 125,56 & 7,89 & $+17{,}59$ & 39,4\% \\
+ & 2 & 191,25 & 146,67 & 9,27 & $+15{,}31$ & 43,1\% \\
+ & 3 & 204,36 & 157,55 & 9,96 & $+13{,}08$ & 43,1\% \\
+ & 6 & 229,60 & 173,90 & 10,88 & $-4{,}40$ & 47,6\% \\
+\addlinespace
+Ingênuo & 1 & 168,05 & 126,83 & 7,81 & $+0{,}56$ & 45,0\% \\
+ & 2 & 210,23 & 157,53 & 9,74 & $+1{,}45$ & 46,5\% \\
+ & 3 & 229,81 & 176,29 & 10,98 & $+2{,}68$ & 46,5\% \\
+ & 6 & 267,34 & 203,26 & 12,71 & $+5{,}65$ & 47,0\% \\
+\addlinespace
+Holt-Winters & 1 & 173,68 & 133,44 & 8,24 & $-1{,}13$ & 51,5\% \\
+ & 2 & 209,23 & 160,20 & 9,99 & $-1{,}54$ & 50,9\% \\
+ & 3 & 221,27 & 172,81 & 10,79 & $-1{,}92$ & 50,9\% \\
+ & 6 & 255,43 & 199,16 & 12,42 & $-4{,}13$ & 50,6\% \\
+\addlinespace
+Média móvel & 1 & 187,65 & 142,68 & 8,90 & $+3{,}01$ & 46,5\% \\
+ & 2 & 207,27 & 158,16 & 9,88 & $+3{,}86$ & 46,1\% \\
+ & 3 & 219,73 & 168,03 & 10,50 & $+4{,}54$ & 46,5\% \\
+ & 6 & 242,20 & 186,24 & 11,55 & $+5{,}37$ & 46,5\% \\
+\addlinespace
+Sazonal ingênuo & 1 & 360,90 & 291,42 & 17,56 & $-166{,}41$ & 66,9\% \\
+ & 2 & 360,90 & 291,42 & 17,56 & $-166{,}41$ & 66,9\% \\
+ & 3 & 360,90 & 291,42 & 17,56 & $-166{,}41$ & 66,9\% \\
+ & 6 & 360,90 & 291,42 & 17,56 & $-166{,}41$ & 66,9\% \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+\parbox{\textwidth}{\footnotesize Nota: RMSE, MAE e viés em máquinas equivalentes; viés positivo indica superestimação. Cada linha usa as mesmas 462 origens, e a máscara do MAPE não excluiu nenhuma. O sazonal ingênuo repete o valor de um dia antes e, por isso, não depende de $h$.}
+\end{table}

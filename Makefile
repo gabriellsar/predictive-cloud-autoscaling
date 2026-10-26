@@ -1,4 +1,4 @@
-.PHONY: setup lint test data baselines sim all docker-build docker-test
+.PHONY: setup lint test data baselines sim tables all docker-build docker-test
 
 setup:
 	uv sync
@@ -19,7 +19,10 @@ baselines:
 sim:
 	uv run python -m tcc.sim.run
 
-all: data baselines sim
+tables:
+	uv run python -m tcc.eval.latex
+
+all: data baselines sim tables
 
 docker-build:
 	docker compose build
