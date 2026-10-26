@@ -72,7 +72,7 @@ Avaliar, em um centro de dados simulado alimentado por rastros públicos, a redu
 \subsection{Questões de pesquisa}
 \label{subsec:questoes}
 
-O objetivo geral se desdobra nas quatro questões de pesquisa (QP) da Tabela~\ref{tab:questoes}.
+O objetivo geral se desdobra nas cinco questões de pesquisa (QP) da Tabela~\ref{tab:questoes}.
 
 \begin{table}[htbp]
 \centering
@@ -87,6 +87,7 @@ O objetivo geral se desdobra nas quatro questões de pesquisa (QP) da Tabela~\re
 \textbf{QP2} & Um previsor com menor erro (RMSE, MAE) leva necessariamente a uma alocação mais barata no ponto de operação? \\
 \textbf{QP3} & Qual é o ganho da alocação preditiva em relação à reativa, e como ele varia com a antecedência da decisão $L$? \\
 \textbf{QP4} & As conclusões obtidas no rastro da Alibaba se mantêm no rastro do Google? \\
+\textbf{QP5} & Incluir a memória como entrada da GRU reduz o custo de alocação em relação à GRU univariada, para o mesmo $\varepsilon$? \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -110,12 +111,13 @@ A Tabela~\ref{tab:objetivos} lista os objetivos específicos (OE), as questões 
 \oelabel{OE2}{oe:previsores} & \textbf{Previsores:} implementar os seis previsores e avaliar seu erro em cada horizonte & -- & Implementado \\
 \oelabel{OE3}{oe:simulador} & \textbf{Simulador e políticas:} implementar e testar o simulador e as políticas da Seção~\ref{sec:solucao} & -- & Protótipo em Python implementado \\
 \oelabel{OE4}{oe:cloudsim} & \textbf{CloudSim Plus:} reproduzir políticas e métricas no CloudSim Plus e usá-lo na avaliação final & -- & Previsto para o PF~II \\
-\oelabel{OE5}{oe:custo} & \textbf{Custo e violações:} pontos de operação para $\varepsilon = 1\%$ e $5\%$ e curvas de custo contra violações & QP1, QP3 & Preliminar \\
-\oelabel{OE6}{oe:erro} & \textbf{Erro e custo:} confrontar o erro com $h = L$ e o custo no ponto de operação & QP2 & Preliminar \\
-\oelabel{OE7}{oe:sensibilidade} & \textbf{Sensibilidade:} efeito da antecedência $L$ sobre os pontos de operação & QP3 & Parcial ($L = 1$ e $L = 2$) \\
-\oelabel{OE8}{oe:robustez} & \textbf{Robustez:} várias sementes da GRU e várias janelas de teste, com média e dispersão & -- & Previsto para o PF~II \\
-\oelabel{OE9}{oe:replicacao} & \textbf{Replicação:} mesmo protocolo no rastro do Google de 2019, mudando só a leitura dos dados & QP4 & Previsto para o PF~II \\
-\oelabel{OE10}{oe:reprodutibilidade} & \textbf{Reprodutibilidade:} repositório público que regenera tabelas e figuras com um comando & -- & Implementado; a ser mantido \\
+\oelabel{OE5}{oe:memoria} & \textbf{Memória:} incluir a memória como segundo recurso na alocação, com $n_t$ dado pelo maior entre os necessários para processador e para memória, e como entrada da GRU, comparada à GRU univariada & QP5 & Previsto para o PF~II \\
+\oelabel{OE6}{oe:custo} & \textbf{Custo e violações:} pontos de operação para $\varepsilon = 1\%$ e $5\%$ e curvas de custo contra violações & QP1, QP3 & Preliminar \\
+\oelabel{OE7}{oe:erro} & \textbf{Erro e custo:} confrontar o erro com $h = L$ e o custo no ponto de operação & QP2 & Preliminar \\
+\oelabel{OE8}{oe:sensibilidade} & \textbf{Sensibilidade:} efeito da antecedência $L$ sobre os pontos de operação & QP3 & Parcial ($L = 1$ e $L = 2$) \\
+\oelabel{OE9}{oe:robustez} & \textbf{Robustez:} várias sementes da GRU e várias janelas de teste, com média e dispersão & -- & Previsto para o PF~II \\
+\oelabel{OE10}{oe:replicacao} & \textbf{Replicação:} mesmo protocolo no rastro do Google de 2019, mudando só a leitura dos dados & QP4 & Previsto para o PF~II \\
+\oelabel{OE11}{oe:reprodutibilidade} & \textbf{Reprodutibilidade:} repositório público que regenera tabelas e figuras com um comando & -- & Implementado; a ser mantido \\
 \bottomrule
 \end{tabularx}
 \end{table}
