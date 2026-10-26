@@ -71,13 +71,13 @@
 %%%
 
 \author{Gabriel Lobo de Sant'Anna Rosas}
-\authorR{Lobo de Sant'Anna Rosas, Gabriel} % Sobrenomes, Nome
+\authorR{Rosas, Gabriel Lobo de Sant'Anna} % Sobrenome, Prenomes (ABNT)
 
 \advisor{Adriano Francisco Branco}{}       % Nome Sobrenome
-\advisorR{Francisco Branco, Adriano}       % Sobrenome, Nome
+\advisorR{Branco, Adriano Francisco}       % Sobrenome, Prenomes (ABNT)
 
 \coadvisor{Jonatas dos Santos Grosman}{}
-\coadvisorR{dos Santos Grosman, Jonatas}
+\coadvisorR{Grosman, Jonatas dos Santos}
 
 \title{Alocação preditiva de recursos em nuvem via previsão de carga com Redes Neurais para minimização de custos operacionais}
 \titleuk{Predictive cloud resource allocation via workload forecasting with neural networks for operating cost minimization}
@@ -94,7 +94,7 @@
 \program{Engenharia de Computação}
 % \curso{Engenharia da Computação}              % Curso de Graduação em ...
 % \titulacao{Engenheiro de Computação}          % título a ser obtido
-% \disciplina{Projeto Final I}{Undergraduate Thesis I}
+\disciplina{Projeto Final I}{Undergraduate Thesis I}
 
 
  
@@ -116,11 +116,11 @@
 
 
 \abstract{%
-Provedores de nuvem precisam decidir continuamente quantas instâncias manter ativas: recursos em excesso elevam o custo, e recursos insuficientes violam o acordo de nível de serviço. A alocação reativa só ajusta a capacidade depois de observar a mudança na demanda e, por isso, chega atrasada nos picos. Este trabalho investiga o quanto a qualidade da previsão de carga reduz o custo de alocação sem aumentar as violações de serviço. Para atribuir as diferenças ao previsor, a política de alocação é mantida fixa e apenas o previsor muda. São comparados métodos tradicionais de previsão (ingênuo, média móvel, sazonal ingênuo, Holt-Winters e ARIMA) e uma rede neural recorrente do tipo GRU, além de uma política reativa e do dimensionamento estático pelo pico do treino, sobre séries de utilização agregadas a partir do rastro público de um \textit{cluster} da Alibaba e avaliadas em um centro de dados simulado. As métricas são o custo normalizado pelo de um oráculo e a fração de intervalos com violação. Os resultados preliminares mostram que a previsão reduz muito o custo frente ao dimensionamento estático e de forma modesta frente à política reativa, e que a GRU é competitiva com o ARIMA, sem vantagem clara. Esta etapa também define o ambiente e o plano do Projeto Final II.%
+Provedores de nuvem precisam decidir continuamente quantas instâncias manter ativas: recursos em excesso elevam o custo, e recursos insuficientes violam o acordo de nível de serviço. A alocação reativa só ajusta a capacidade depois de observar a mudança na demanda e, por isso, chega atrasada nos picos. Este trabalho investiga o quanto a qualidade da previsão de carga reduz o custo de alocação sem aumentar as violações de serviço. Para atribuir as diferenças ao previsor, a política de alocação é mantida fixa e apenas o previsor muda. São comparados métodos tradicionais de previsão (ingênuo, média móvel, sazonal ingênuo, Holt-Winters e ARIMA) e uma rede neural recorrente do tipo GRU, além de uma política reativa e do dimensionamento estático pelo pico do treino, sobre séries de utilização agregadas a partir do rastro público de um \textit{cluster} da Alibaba e avaliadas em um centro de dados simulado. As métricas são o custo normalizado pelo de um oráculo e a fração de intervalos com violação. Os resultados preliminares mostram que a previsão reduz muito o custo frente ao dimensionamento estático, mas que, com limite de 5\% de intervalos com violação, o melhor previsor fica apenas 1,7\% abaixo da política reativa, diferença que uma única janela de teste não permite atribuir ao previsor, e que a GRU é competitiva com o ARIMA, sem vantagem clara. No Projeto Final II, a avaliação passa ao CloudSim Plus, incorpora a memória e se estende ao rastro do Google.%
 }
 
 \abstractuk{%
-Cloud providers must continuously decide how many instances to keep active: excess resources raise costs, while insufficient resources violate the service level agreement. Reactive allocation adjusts capacity only after observing a change in demand and therefore lags behind peaks. This work investigates how much the quality of workload forecasting reduces allocation cost without increasing service violations. To attribute differences to the forecaster, the allocation policy is kept fixed and only the forecaster changes. Traditional forecasting methods (naive, moving average, seasonal naive, Holt-Winters and ARIMA) and a recurrent neural network of the GRU type are compared, together with a reactive policy and static sizing at the training peak, using utilization series aggregated from a public Alibaba cluster trace and evaluated in a simulated data center. The metrics are the cost normalized by that of an oracle and the fraction of intervals with violations. Preliminary results show that forecasting greatly reduces cost compared with static sizing and only modestly compared with the reactive policy, and that the GRU is competitive with ARIMA, with no clear advantage. This stage also defines the environment and the plan for the second part of the project.%
+Cloud providers must continuously decide how many instances to keep active: excess resources raise costs, while insufficient resources violate the service level agreement. Reactive allocation adjusts capacity only after observing a change in demand and therefore lags behind peaks. This work investigates how much the quality of workload forecasting reduces allocation cost without increasing service violations. To attribute differences to the forecaster, the allocation policy is kept fixed and only the forecaster changes. Traditional forecasting methods (naive, moving average, seasonal naive, Holt-Winters and ARIMA) and a recurrent neural network of the GRU type are compared, together with a reactive policy and static sizing at the training peak, using utilization series aggregated from a public Alibaba cluster trace and evaluated in a simulated data center. The metrics are the cost normalized by that of an oracle and the fraction of intervals with violations. Preliminary results show that forecasting greatly reduces cost compared with static sizing, but that, with a 5\% violation limit, the best forecaster is only 1.7\% cheaper than the reactive policy, a difference that a single test window cannot attribute to the forecaster, and that the GRU is competitive with ARIMA, with no clear advantage. In the second part of the project, the evaluation moves to CloudSim Plus, incorporates memory and extends to the Google trace.%
 }
 
 \begin{document}
