@@ -127,6 +127,7 @@ No aprendizado por reforço, um agente aprende uma política que mapeia o estado
 \caption{Comparativo entre os trabalhos relacionados e a proposta deste trabalho.}
 \label{tab:comparativo}
 \footnotesize
+\renewcommand{\arraystretch}{1.5}
 \setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\textwidth}{
   >{\raggedright\arraybackslash}p{2.1cm}
@@ -167,6 +168,7 @@ O protótipo é escrito em Python 3.12, pela disponibilidade de bibliotecas para
 \centering
 \caption{Ferramentas utilizadas em cada etapa do \textit{pipeline}.}
 \label{tab:tecnologias}
+\renewcommand{\arraystretch}{1.5}
 \footnotesize
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{1.6cm} >{\raggedright\arraybackslash}p{5.8cm} >{\raggedright\arraybackslash}X}
 \toprule
@@ -182,4 +184,4 @@ Ambiente & uv, Docker, Makefile, pytest, Git e GitHub & Dependências travadas, 
 \end{tabularx}
 \end{table}
 
-O CloudSim \cite{calheiros2011cloudsim} é um simulador de eventos discretos que modela centros de dados, servidores, máquinas virtuais e a execução de tarefas, usado, por exemplo, na avaliação do provisionamento guiado por ARIMA de \citeonline{calheiros2015arima}; o CloudSim Plus é um \textit{framework} em Java derivado dele, cujo uso é descrito nas Seções~\ref{sec:solucao} e~\ref{sec:mudancas-plano}. Para a reprodutibilidade, as versões das dependências ficam travadas, todos os parâmetros dos experimentos ficam em um arquivo de configuração, e nenhum no código, e um único comando regenera todas as tabelas e figuras a partir dos dados brutos.
+O CloudSim \cite{calheiros2011cloudsim} é um simulador, em Java, de eventos discretos que modela centros de dados, servidores, máquinas virtuais e a execução de tarefas, usado, por exemplo, na avaliação do provisionamento guiado por ARIMA de \citeonline{calheiros2015arima}. Para a reprodutibilidade, as versões das dependências ficam travadas, todos os parâmetros dos experimentos ficam em um arquivo de configuração, e nenhum no código, e um único comando regenera todas as tabelas e figuras a partir dos dados brutos.
