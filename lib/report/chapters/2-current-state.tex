@@ -124,7 +124,7 @@ No aprendizado por reforço, um agente aprende uma política que mapeia o estado
 
 \begin{table}[htbp]
 \centering
-\caption{Comparativo entre os trabalhos relacionados e a proposta deste trabalho. O traço indica que o critério não se aplica.}
+\caption{Comparativo entre os trabalhos relacionados e a proposta deste trabalho.}
 \label{tab:comparativo}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -148,6 +148,9 @@ No aprendizado por reforço, um agente aprende uma política que mapeia o estado
 \textbf{Este trabalho} & GRU e cinco métodos tradicionais & Alibaba (PF~I); Google (PF~II) & Erro, custo e violações & Sim & Sim \\
 \bottomrule
 \end{tabularx}
+
+\smallskip
+\parbox{\textwidth}{\footnotesize Nota: o traço indica que o critério não se aplica.}
 \end{table}
 
 A Tabela~\ref{tab:comparativo} resume os trabalhos mais próximos desta proposta, indicando também se a previsão é acoplada a uma decisão de alocação e se diferentes previsores são comparados sob a mesma política. Esses trabalhos formam duas linhas que não se encontram. Os de previsão \cite{xu2022esdnn, rossi2023forecasting, agullo2025enhancing} comparam vários modelos por métricas calculadas sobre a própria previsão, que não indicam a utilidade dos modelos para a gestão de recursos \cite{rossi2023forecasting} nem revelam as falhas nos picos \cite{agullo2025enhancing}. Os que acoplam a previsão à alocação \cite{calheiros2015arima, pan2023magicscaler} aplicam a decisão a um único previsor, comparado com políticas reativas, e o esDNN compara sua simulação de escalonamento apenas com uma política baseada na média das observações anteriores \cite{xu2022esdnn}. A revisão de \citeonline{bodra2025ml} observa, por fim, que a literatura carece de comparações quantitativas sistemáticas.
