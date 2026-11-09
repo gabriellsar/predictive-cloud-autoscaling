@@ -25,33 +25,7 @@ O escalonamento automático (\textit{autoscaling}) ajusta os recursos de uma apl
 
 Como uma nova instância leva um tempo para ficar disponível, o atraso de inicialização \cite{mao2012startup}, a decisão tomada com as observações até o intervalo $\tau$ só passa a valer em $\tau + L$, em que $L$ é a antecedência da decisão (\textit{lead time}), igual a um intervalo mais o atraso de inicialização; sem atraso, $L = 1$. A política reativa decide em $\tau$ com a utilização observada em $\tau$, e a preditiva tenta antecipar a demanda de $\tau + L$. Em cada intervalo, a decisão pode errar em duas direções: com $k \cdot n_t > d_t$, a capacidade ociosa $k \cdot n_t - d_t$ é custo sem retorno (superprovisionamento); com $k \cdot n_t < d_t$, parte da demanda não é atendida (subprovisionamento).
 
-\subsection{Métricas de avaliação}
-\label{subsec:metricas}
-
-\textbf{Métricas de previsão.} Medem o quanto a previsão se aproxima do valor real, independentemente de como ela será usada. Para $N$ previsões $\hat{y}_i$ e valores reais $y_i$, as mais comuns são o erro quadrático médio (MSE), sua raiz (RMSE), o erro absoluto médio (MAE) e o erro percentual absoluto médio (MAPE), às quais este trabalho acrescenta o viés, que é o erro médio com sinal:
-
-\begin{align}
-\mathrm{MSE} &= \frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2, &
-\mathrm{RMSE} &= \sqrt{\mathrm{MSE}}, &
-\mathrm{MAE} &= \frac{1}{N}\sum_{i=1}^{N}\lvert y_i - \hat{y}_i \rvert, \nonumber\\
-\mathrm{MAPE} &= \frac{100\%}{N}\sum_{i=1}^{N}\left\lvert \frac{y_i - \hat{y}_i}{y_i} \right\rvert, &
-\text{viés} &= \frac{1}{N}\sum_{i=1}^{N}(\hat{y}_i - y_i). && \label{eq:metricas-previsao}
-\end{align}
-
-\noindent Como o MAPE é instável com $y_i$ próximo de zero, ele é calculado só sobre os demais pontos, e a fração mantida (cobertura da máscara) é informada. As quatro primeiras métricas são simétricas, mas, na alocação, a superestimação gera custo e a subestimação gera violações, de modo que um modelo com menor RMSE não leva necessariamente às melhores decisões. Por isso são usados também o viés, cujo valor negativo indica tendência a subestimar a demanda, e a taxa de subestimação, que é a fração das previsões abaixo do valor real.
-
-\textbf{Métricas de alocação.} Medem o resultado das decisões tomadas a partir da previsão. Para $T$ intervalos:
-
-\begin{align}
-  C &= \sum_{t=1}^{T} c \cdot n_t, &
-  V &= \frac{1}{T}\sum_{t=1}^{T} \mathbf{1}\left[\, d_t > k \cdot n_t \,\right], \nonumber\\
-  U &= \frac{\sum_{t} \max(0,\, d_t - k \cdot n_t)}{\sum_{t} d_t}, &
-  O &= \frac{\sum_{t} \max(0,\, k \cdot n_t - d_t)}{\sum_{t} k \cdot n_t}, \nonumber\\
-  A &= \sum_{t=2}^{T} \mathbf{1}\left[\, n_t \neq n_{t-1} \,\right], &
-  C_{\mathrm{norm}} &= \frac{C}{C_{\text{oráculo}}}, \label{eq:metricas-alocacao}
-\end{align}
-
-\noindent em que $C$ é o custo total, $V$ é a fração de intervalos com violação, $U$ é a fração da demanda não atendida, $O$ é a fração da capacidade ociosa e $A$ é o número de alterações em $n_t$, indesejáveis na prática. $U$ mede a magnitude das violações, que $V$ apenas conta, e $O$ mede a capacidade paga e não usada. $C$ e $V$ são, respectivamente, a função objetivo e o lado esquerdo da restrição da Equação~\ref{eq:problema}. O custo é normalizado pelo de um oráculo, que conhece a demanda futura e aloca, em cada intervalo, o menor número de instâncias que a atende, $\lceil d_t / k \rceil$. Como nenhuma alocação mais barata atende toda a demanda, $C_{\text{oráculo}}$ é o piso do custo sem violações; uma política que viola pode custar menos que o oráculo, e por isso $C_{\mathrm{norm}}$ deve ser lido sempre junto com $V$.
+Essa assimetria separa dois tipos de medida. As métricas de previsão, como a raiz do erro quadrático médio (RMSE) e o erro absoluto médio (MAE), medem a distância entre a previsão e o valor real e são simétricas: tratam da mesma forma a superestimação, que gera custo, e a subestimação, que gera violações. As métricas de alocação medem o resultado das decisões, como o custo e a fração de intervalos com violação. Por isso, um modelo com menor erro não leva necessariamente às melhores decisões; as definições adotadas neste trabalho estão na Seção~\ref{subsec:metricas}.
 
 \section{Abordagens para previsão de carga}
 \label{sec:previsao}
@@ -107,16 +81,11 @@ Na alocação guiada por previsão, a decisão tem duas etapas desacopladas: um 
 n_{t+h} = \max\left(n_{\min},\, \left\lceil \frac{(1 + m)\, \hat{d}_{t+h}}{k} \right\rceil\right).
 \end{equation}
 
-\noindent Na alocação, $t$ é a origem $\tau$ e o horizonte é a antecedência, $h = L$, para que a previsão se refira ao intervalo em que a decisão vale (Seção~\ref{subsec:provisionamento}). Margens maiores reduzem $V$ e aumentam $C$, e escolher a margem em um conjunto de validação é a forma prática de buscar o menor custo que respeita o limite $\varepsilon$ da Equação~\ref{eq:problema}. Com um modelo que fornece uma distribuição, a margem pode dar lugar a um quantil \cite{rossi2023forecasting, calheiros2015arima}.
+\noindent Na alocação, $t$ é a origem $\tau$ e o horizonte é a antecedência, $h = L$, para que a previsão se refira ao intervalo em que a decisão vale (Seção~\ref{subsec:provisionamento}). Margens maiores reduzem as violações e aumentam o custo, e escolher a margem em um conjunto de validação é a forma prática de buscar o menor custo que respeita o limite $\varepsilon$ da Equação~\ref{eq:problema}. Com um modelo que fornece uma distribuição, a margem pode dar lugar a um quantil \cite{rossi2023forecasting, calheiros2015arima}.
 
 O MagicScaler \cite{pan2023magicscaler} combina uma previsão com incerteza a uma otimização estocástica que minimiza o custo sujeito a um limite de demanda não atendida e, em \textit{clusters} da Alibaba Cloud, reduziu a perda de qualidade de serviço em relação a uma política reativa, com pequeno aumento de custo. Seus dados, porém, são privados, e a decisão é aplicada apenas ao próprio previsor.
 
-A principal vantagem do desacoplamento é a modularidade: com a regra de decisão fixa, é possível trocar apenas o previsor e atribuir a ele as diferenças de custo e de violações, propriedade que este trabalho explora.
-
-\subsection{Aprendizado por reforço}
-\label{subsec:reforco}
-
-No aprendizado por reforço, um agente aprende uma política que mapeia o estado do sistema diretamente em ações, como adicionar ou remover instâncias, guiado por uma recompensa que penaliza custo e violações \cite{lorido2014autoscaling}. Esses métodos são sensíveis ao projeto da recompensa e aos hiperparâmetros, enfrentam limitações de escalabilidade conforme o espaço de estados cresce \cite{bodra2025ml} e exigem um ambiente de simulação e um grande número de episódios de treinamento. Além disso, uma política aprendida é difícil de interpretar: quando ela decide mal, não se sabe se o problema está na antecipação da demanda ou na decisão. Por isso, este trabalho adota a abordagem desacoplada e deixa a comparação com uma política aprendida para trabalhos futuros.
+A principal vantagem do desacoplamento é a modularidade: com a regra de decisão fixa, é possível trocar apenas o previsor e atribuir a ele as diferenças de custo e de violações, propriedade que este trabalho explora. A alternativa acoplada é o aprendizado por reforço, em que um agente aprende a mapear o estado do sistema diretamente em ações, guiado por uma recompensa que penaliza custo e violações \cite{lorido2014autoscaling}. Esses métodos são sensíveis ao projeto da recompensa e aos hiperparâmetros e enfrentam limitações de escalabilidade conforme o espaço de estados cresce \cite{bodra2025ml}, e, quando a política aprendida decide mal, não se sabe se o problema está na antecipação da demanda ou na decisão. Por isso, a comparação com uma política aprendida fica para trabalhos futuros.
 
 \section{Comparativo dos trabalhos relacionados e lacuna}
 \label{sec:lacuna}

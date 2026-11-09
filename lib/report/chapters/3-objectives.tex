@@ -6,7 +6,7 @@
 \newcommand{\oelabel}[2]{\textbf{#1}\def\@currentlabel{#1}\label{#2}}
 \makeatother
 
-Este capítulo descreve a solução proposta para a lacuna da Seção~\ref{sec:lacuna}, os objetivos, o escopo e o público do sistema e os itens a apresentar à banca.
+Este capítulo descreve a solução proposta para a lacuna da Seção~\ref{sec:lacuna}, as métricas de avaliação, os objetivos, o escopo e o público do sistema e os itens a apresentar à banca.
 
 \section{Solução proposta}
 \label{sec:solucao}
@@ -60,6 +60,34 @@ V_{\mathrm{val}}(m) \leq \varepsilon,
 \textbf{Simulador e métricas.} Reproduz, intervalo a intervalo, a alocação de instâncias homogêneas, em que a decisão tomada em $\tau$ vale em $\tau + L$, e calcula as métricas da Seção~\ref{subsec:metricas}. É implementado em Python nos Projetos Finais I e II; se o cronograma permitir, um subconjunto dos experimentos será reproduzido no CloudSim Plus \cite{silvafilho2017cloudsimplus} como validação.
 
 A decisão metodológica central é manter a política de alocação \textbf{fixa} e variar apenas o previsor. Assim, qualquer diferença de custo ou de violações entre duas configurações pode ser atribuída à previsão, e não à regra de decisão.
+
+\section{Métricas de avaliação}
+\label{subsec:metricas}
+
+\textbf{Métricas de previsão.} Medem o quanto a previsão se aproxima do valor real, independentemente de como ela será usada. Para $N$ previsões $\hat{y}_i$ e valores reais $y_i$, as mais comuns são o erro quadrático médio (MSE), sua raiz (RMSE), o erro absoluto médio (MAE) e o erro percentual absoluto médio (MAPE), às quais este trabalho acrescenta o viés, que é o erro médio com sinal:
+
+\begin{align}
+\mathrm{MSE} &= \frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2, &
+\mathrm{RMSE} &= \sqrt{\mathrm{MSE}}, &
+\mathrm{MAE} &= \frac{1}{N}\sum_{i=1}^{N}\lvert y_i - \hat{y}_i \rvert, \nonumber\\
+\mathrm{MAPE} &= \frac{100\%}{N}\sum_{i=1}^{N}\left\lvert \frac{y_i - \hat{y}_i}{y_i} \right\rvert, &
+\text{viés} &= \frac{1}{N}\sum_{i=1}^{N}(\hat{y}_i - y_i). && \label{eq:metricas-previsao}
+\end{align}
+
+\noindent Como o MAPE é instável com $y_i$ próximo de zero, ele é calculado só sobre os demais pontos, e a fração mantida (cobertura da máscara) é informada. Como as quatro primeiras métricas são simétricas e a alocação não é (Seção~\ref{subsec:provisionamento}), são usados também o viés, cujo valor negativo indica tendência a subestimar a demanda, e a taxa de subestimação, que é a fração das previsões abaixo do valor real.
+
+\textbf{Métricas de alocação.} Medem o resultado das decisões tomadas a partir da previsão. Para $T$ intervalos:
+
+\begin{align}
+  C &= \sum_{t=1}^{T} c \cdot n_t, &
+  V &= \frac{1}{T}\sum_{t=1}^{T} \mathbf{1}\left[\, d_t > k \cdot n_t \,\right], \nonumber\\
+  U &= \frac{\sum_{t} \max(0,\, d_t - k \cdot n_t)}{\sum_{t} d_t}, &
+  O &= \frac{\sum_{t} \max(0,\, k \cdot n_t - d_t)}{\sum_{t} k \cdot n_t}, \nonumber\\
+  A &= \sum_{t=2}^{T} \mathbf{1}\left[\, n_t \neq n_{t-1} \,\right], &
+  C_{\mathrm{norm}} &= \frac{C}{C_{\text{oráculo}}}, \label{eq:metricas-alocacao}
+\end{align}
+
+\noindent em que $C$ é o custo total, $V$ é a fração de intervalos com violação, $U$ é a fração da demanda não atendida, $O$ é a fração da capacidade ociosa e $A$ é o número de alterações em $n_t$, indesejáveis na prática. $U$ mede a magnitude das violações, que $V$ apenas conta, e $O$ mede a capacidade paga e não usada. $C$ e $V$ são, respectivamente, a função objetivo e o lado esquerdo da restrição da Equação~\ref{eq:problema}. O custo é normalizado pelo de um oráculo, que conhece a demanda futura e aloca, em cada intervalo, o menor número de instâncias que a atende, $\lceil d_t / k \rceil$. Como nenhuma alocação mais barata atende toda a demanda, $C_{\text{oráculo}}$ é o piso do custo sem violações; uma política que viola pode custar menos que o oráculo, e por isso $C_{\mathrm{norm}}$ deve ser lido sempre junto com $V$.
 
 \section{Objetivos}
 \label{sec:objetivos}
@@ -129,8 +157,15 @@ O melhor previsor em $\varepsilon$ é o de menor $C_{\mathrm{norm}}$ médio entr
 
 \section{Escopo do sistema}
 \label{sec:escopo-sistema}
+\label{sec:escopo}
 
-O sistema é um \textbf{ambiente de simulação e avaliação}, e não um autoescalador para produção: recebe um rastro e um arquivo de configuração e produz as métricas de previsão e de alocação. A Tabela~\ref{tab:parametros} resume os parâmetros da alocação e da avaliação, e a Tabela~\ref{tab:parametros-previsores}, no Apêndice~\ref{ap:parametros}, os dos previsores e as janelas e sementes do Projeto Final II. Os parâmetros do protótipo são mantidos no Projeto Final II, salvo os ajustes de \ref{oe:sensibilidade} a \ref{oe:replicacao} e as janelas e sementes da Seção~\ref{subsec:objetivos-especificos}.
+O sistema é um \textbf{ambiente de simulação e avaliação}, e não um autoescalador para produção: recebe um rastro e um arquivo de configuração e produz as métricas de previsão e de alocação.
+
+\textbf{Incluído.} Rastros públicos da Alibaba \cite{alibaba2018trace} e do Google \cite{wilkes2020google}, agregados em séries de uso de processador e de memória; horizontes de previsão curtos, na escala de minutos; alocação em um ambiente de simulação, com custo por instância ativa e violação de SLA nos intervalos em que a demanda excede a capacidade; e comparação entre uma rede neural e métodos tradicionais de previsão sob a mesma política de alocação, ao lado das políticas de referência da Seção~\ref{sec:solucao}.
+
+\textbf{Fora do escopo.} Implantação em uma nuvem real, posicionamento e migração de máquinas virtuais entre servidores físicos, consumo de energia, múltiplos provedores e aprendizado por reforço para a decisão. Na simulação, o posicionamento segue a política padrão do simulador, a mesma para todos os previsores.
+
+A Tabela~\ref{tab:parametros} resume os parâmetros da alocação e da avaliação, e a Tabela~\ref{tab:parametros-previsores}, no Apêndice~\ref{ap:parametros}, os dos previsores e as janelas e sementes do Projeto Final II. Os parâmetros do protótipo são mantidos no Projeto Final II, salvo os ajustes de \ref{oe:sensibilidade} a \ref{oe:replicacao} e as janelas e sementes da Seção~\ref{subsec:objetivos-especificos}.
 
 \begin{table}[htbp]
 \centering
@@ -159,7 +194,7 @@ Limites de violação & $\varepsilon$ & 1\% e 5\% \\
 \end{tabularx}
 \end{table}
 
-Valem as simplificações do Capítulo~\ref{cap:situacao-atual}: demanda agregada, instâncias homogêneas e violação sempre que a demanda de um intervalo excede a capacidade. No protótipo, a alocação considera apenas o processador, e a GRU é univariada. No Projeto Final II, a memória entra de duas formas: como segundo recurso na alocação, com o número de instâncias dado pelo maior entre os necessários para processador e para memória, e como entrada adicional da GRU, nos moldes do esDNN \cite{xu2022esdnn}. Os itens fora do escopo são os da Seção~\ref{sec:escopo}.
+Valem as simplificações do Capítulo~\ref{cap:situacao-atual}: demanda agregada, instâncias homogêneas e violação sempre que a demanda de um intervalo excede a capacidade. No protótipo, a alocação considera apenas o processador, e a GRU é univariada. No Projeto Final II, a memória entra de duas formas: como segundo recurso na alocação, com o número de instâncias dado pelo maior entre os necessários para processador e para memória, e como entrada adicional da GRU, nos moldes do esDNN \cite{xu2022esdnn}.
 
 \section{Usuários e situações apoiadas}
 \label{sec:usuarios}
@@ -169,12 +204,13 @@ O ambiente se destina a pesquisadores e a engenheiros de planejamento de capacid
 \section{Avanços em relação às soluções existentes}
 \label{sec:avancos}
 
-Sem propor uma nova arquitetura, já que a GRU é deliberadamente simples, o trabalho busca, em relação à lacuna da Seção~\ref{sec:lacuna}:
+Sem propor uma nova arquitetura, já que a GRU é deliberadamente simples, o trabalho busca quatro avanços, cada um em resposta a uma limitação apontada no Capítulo~\ref{cap:situacao-atual} e ligado aos objetivos que o realizam:
 
 \begin{itemize}
-    \item \textbf{Comparação controlada:} do ingênuo à rede neural, sob a mesma política.
-    \item \textbf{Custo a um mesmo nível de serviço:} instâncias discretas e antecedência.
-    \item \textbf{Erro contra custo:} a QP2 testa se menor erro implica menor custo.
+    \item \textbf{Comparação controlada:} do ingênuo à rede neural, sob a mesma política, enquanto os trabalhos revisados aplicam a decisão a um único previsor (Seção~\ref{sec:lacuna}); \ref{oe:previsores}, \ref{oe:simulador} e \ref{oe:custo}.
+    \item \textbf{Custo a um mesmo nível de serviço:} instâncias discretas e antecedência, em vez do nível de serviço medido sobre a própria previsão, com capacidade contínua (Seção~\ref{subsec:incerteza}); \ref{oe:custo} e \ref{oe:sensibilidade}.
+    \item \textbf{Erro contra custo:} a QP2 testa se menor erro implica menor custo, o que a comparação por métricas de erro simétricas não mostra (Seção~\ref{subsec:recorrentes}); \ref{oe:erro}.
+    \item \textbf{Dados públicos e reprodutibilidade:} dois rastros públicos e resultados regeneráveis, em contraste com avaliações sobre dados privados (Seção~\ref{subsec:alocacao-preditiva}); \ref{oe:dados}, \ref{oe:replicacao} e \ref{oe:reprodutibilidade}.
 \end{itemize}
 
 \section{Itens a serem implementados e apresentados à banca}
