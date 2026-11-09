@@ -43,12 +43,12 @@ Como uma nova instância leva um tempo para ficar disponível, o atraso de inici
 \textbf{Métricas de alocação.} Medem o resultado das decisões tomadas a partir da previsão. Para $T$ intervalos:
 
 \begin{align}
-C &= \sum_{t=1}^{T} c \cdot n_t, &
-V &= \frac{1}{T}\sum_{t=1}^{T} \mathbf{1}\left[\, d_t > k \cdot n_t \,\right], \nonumber\\
-U &= \frac{\sum_{t} \max(0,\, d_t - k \cdot n_t)}{\sum_{t} d_t}, &
-O &= \frac{\sum_{t} \max(0,\, k \cdot n_t - d_t)}{\sum_{t} k \cdot n_t}, \nonumber\\
-A &= \sum_{t=2}^{T} \mathbf{1}\left[\, n_t \neq n_{t-1} \,\right], &
-C_{\mathrm{norm}} &= \frac{C}{C_{\text{oráculo}}}, \label{eq:metricas-alocacao}
+  C &= \sum_{t=1}^{T} c \cdot n_t, &
+  V &= \frac{1}{T}\sum_{t=1}^{T} \mathbf{1}\left[\, d_t > k \cdot n_t \,\right], \nonumber\\
+  U &= \frac{\sum_{t} \max(0,\, d_t - k \cdot n_t)}{\sum_{t} d_t}, &
+  O &= \frac{\sum_{t} \max(0,\, k \cdot n_t - d_t)}{\sum_{t} k \cdot n_t}, \nonumber\\
+  A &= \sum_{t=2}^{T} \mathbf{1}\left[\, n_t \neq n_{t-1} \,\right], &
+  C_{\mathrm{norm}} &= \frac{C}{C_{\text{oráculo}}}, \label{eq:metricas-alocacao}
 \end{align}
 
 \noindent em que $C$ é o custo total, $V$ é a fração de intervalos com violação, $U$ é a fração da demanda não atendida, $O$ é a fração da capacidade ociosa e $A$ é o número de alterações em $n_t$, indesejáveis na prática. $U$ mede a magnitude das violações, que $V$ apenas conta, e $O$ mede a capacidade paga e não usada. $C$ e $V$ são, respectivamente, a função objetivo e o lado esquerdo da restrição da Equação~\ref{eq:problema}. O custo é normalizado pelo de um oráculo, que conhece a demanda futura e aloca, em cada intervalo, o menor número de instâncias que a atende, $\lceil d_t / k \rceil$. Como nenhuma alocação mais barata atende toda a demanda, $C_{\text{oráculo}}$ é o piso do custo sem violações; uma política que viola pode custar menos que o oráculo, e por isso $C_{\mathrm{norm}}$ deve ser lido sempre junto com $V$.
