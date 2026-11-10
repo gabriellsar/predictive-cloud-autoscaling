@@ -18,7 +18,7 @@ from matplotlib.transforms import ScaledTranslation  # noqa: E402
 DPI = 200
 #: (rótulo em português, cor, marcador, estilo de linha)
 STYLES: dict[str, tuple[str, str, str, str]] = {
-    "naive": ("preditiva · naive", "#1f77b4", "o", "-"),
+    "naive": ("preditiva · ingênuo", "#1f77b4", "o", "-"),
     "moving_average": ("preditiva · média móvel", "#ff7f0e", "s", "--"),
     "seasonal_naive": ("preditiva · sazonal ingênuo", "#2ca02c", "^", "-."),
     "holt_winters": ("preditiva · Holt-Winters", "#9467bd", "D", ":"),
