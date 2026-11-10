@@ -171,20 +171,6 @@ parâmetros de `configs/v0.toml` e semente fixa (`seed = 42`). As dependências 
 `uv.lock`, e o `Dockerfile` e o `docker-compose.yml` permitem rodar os testes em contêiner
 (`make docker-test`).
 
-## Como citar
-
-O GitHub lê o [`CITATION.cff`](CITATION.cff) e oferece "Cite this repository" na página do repositório. Em BibTeX:
-
-```bibtex
-@thesis{rosas2026alocacao,
-  author = {Rosas, Gabriel Lobo de Sant Anna},
-  title  = {Alocação preditiva de recursos em nuvem via previsão de carga com Redes Neurais para minimização de custos operacionais},
-  school = {Pontifícia Universidade Católica do Rio de Janeiro},
-  type   = {Trabalho de conclusão de curso},
-  year   = {2026}
-}
-```
-
 ## Licença
 
 Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE).
