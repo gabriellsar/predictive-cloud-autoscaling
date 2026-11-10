@@ -1,6 +1,4 @@
-# Trabalho de conclusão de curso Engenharia de Computação (PUC-Rio) 
-
-### Título: Alocação preditiva de recursos em nuvem via previsão de carga com Redes Neurais para minimização de custos operacionais
+# Alocação preditiva de recursos em nuvem via previsão de carga com Redes Neurais para minimização de custos operacionais
 
 - Orientador: Adriano Francisco Branco
 - Coorientador: Jonatas dos Santos Grosman
