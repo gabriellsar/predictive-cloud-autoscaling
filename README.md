@@ -2,8 +2,6 @@
 
 ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
-![uv](https://img.shields.io/badge/packaging-uv-DE5FE9)
-![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)
 ![Status](https://img.shields.io/badge/status-Projeto%20Final%20I-yellow)
 
 Trabalho de conclusão de curso de Engenharia de Computação, PUC-Rio.
