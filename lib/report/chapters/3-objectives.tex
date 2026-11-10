@@ -6,15 +6,16 @@
 \newcommand{\oelabel}[2]{\textbf{#1}\def\@currentlabel{#1}\label{#2}}
 \makeatother
 
-Este capítulo descreve a solução proposta para a lacuna da Seção~\ref{sec:lacuna}, as métricas de avaliação, os objetivos, o escopo e o público do sistema e os itens a apresentar à banca.
+Este capítulo descreve a solução proposta para a lacuna da Seção~\ref{sec:lacuna}, as métricas de avaliação, os objetivos, os avanços em relação às soluções existentes e os itens a apresentar à banca.
 
 \section{Solução proposta}
 \label{sec:solucao}
 
-A solução proposta é um arcabouço de alocação preditiva construído para responder quanto custo operacional uma previsão de carga melhor permite economizar, para um mesmo nível de serviço. Ele segue a abordagem desacoplada da Seção~\ref{subsec:alocacao-preditiva}, com os quatro componentes da Figura~\ref{fig:arquitetura}.
+A solução proposta é um ambiente de avaliação da alocação preditiva, que mede quanto custo operacional uma previsão de carga melhor permite economizar, para um mesmo nível de serviço. Ele segue a abordagem desacoplada da Seção~\ref{subsec:alocacao-preditiva}, com os quatro componentes da Figura~\ref{fig:arquitetura}, e mantém a política de alocação fixa, variando apenas o previsor: a regra e o procedimento de calibração da margem são os mesmos para todos, e só o valor da margem depende do previsor. Assim, diferenças de custo ou de violações entre duas configurações podem ser atribuídas à previsão, e não à regra de decisão.
 
 \begin{figure}[htbp]
 \centering
+\caption{Arquitetura da solução proposta}
 \begin{tikzpicture}[
     >=stealth, thick,
     comp/.style={draw, rounded corners=2pt, align=center, minimum height=1.25cm,
@@ -36,30 +37,49 @@ A solução proposta é um arcabouço de alocação preditiva construído para r
 \draw[->] (dados.north) |- (reat.west);
 \draw[->] (reat.east) -| (sim.north);
 \end{tikzpicture}
-\caption{Arquitetura da solução proposta.}
 \label{fig:arquitetura}
+\fonte{Elaborado pelo autor.}
 \end{figure}
 
-\textbf{\textit{Pipeline} de dados.} Converte um rastro público de \textit{cluster} em séries de demanda de processador e de memória com intervalos de cinco minutos, expressas em máquinas equivalentes totalmente utilizadas.
+\textbf{\textit{Pipeline} de dados.} Converte um rastro público de \textit{cluster} em séries de demanda de processador e de memória com intervalos de cinco minutos, expressas em máquinas equivalentes totalmente utilizadas e divididas cronologicamente em treino, validação e teste.
 
-\textbf{Previsores.} Os cinco métodos tradicionais da Seção~\ref{subsec:estatisticos} e uma GRU que, a partir das últimas seis horas, prevê todos os horizontes de uma vez (estratégia direta), com uma interface comum que só dá acesso ao histórico até a origem $\tau$. A parada antecipada (\textit{early stopping}) da GRU usa o fim do treino, e não a validação, que serve apenas à escolha dos parâmetros das políticas.
+\textbf{Previsores.} Os cinco métodos tradicionais da Seção~\ref{subsec:estatisticos} e uma GRU que, a partir das últimas seis horas, prevê todos os horizontes de uma vez (estratégia direta). Todos usam uma interface comum, que só dá acesso ao histórico até a origem $\tau$. A parada antecipada (\textit{early stopping}) da GRU usa o fim do treino, e a validação fica reservada à escolha dos parâmetros das políticas.
 
-\textbf{Política de alocação.} Aplica a margem $m$ sobre a demanda prevista com $h = L$ (Equação~\ref{eq:alocacao-margem}). As referências são a política reativa do HPA (Equação~\ref{eq:hpa}), o dimensionamento estático, com o número de instâncias necessário no pico do treino, e o oráculo (Seção~\ref{subsec:metricas}).
+\textbf{Política de alocação.} Converte a demanda prevista com $h = L$ em instâncias pela Equação~\ref{eq:alocacao-margem}, com margem $m$. As referências são a política reativa do HPA (Equação~\ref{eq:hpa}), com utilização-alvo $u^{*}$; o dimensionamento estático, que mantém as $n_{\mathrm{pico}}$ instâncias necessárias no pico do treino; e o oráculo (Seção~\ref{subsec:metricas}). Na reativa, $u_\tau = d_\tau / (k \cdot n_\tau)$, e a Equação~\ref{eq:hpa} recomenda $\lceil d_\tau / (k \cdot u^{*}) \rceil$ instâncias: sem a tolerância e a janela de estabilização, ela seria a preditiva com o previsor ingênuo e $m = 1/u^{*} - 1$. A comparação com a reativa muda, portanto, também a regra de decisão.
 
-O parâmetro de cada política é escolhido no conjunto de validação e avaliado no conjunto de teste. Para um limite de violações $\varepsilon$, a margem escolhida é a de menor custo, na grade da Tabela~\ref{tab:parametros}, entre as que cumprem o limite na validação:
+\textbf{Simulador e métricas.} Percorre o período avaliado de cinco em cinco minutos e mantém ativas, em cada intervalo, as instâncias decididas pela política, que só passam a valer depois do tempo de inicialização (Seção~\ref{subsec:provisionamento}). Em cada intervalo, compara a capacidade ativa com a demanda real e, ao fim, calcula o custo, que conta só as instâncias ativas, as violações e as demais métricas da Seção~\ref{subsec:metricas}. É implementado em Python; se o cronograma permitir, parte dos experimentos será reproduzida no CloudSim Plus \cite{silvafilho2017cloudsimplus} como validação.
 
-\begin{equation}
-\label{eq:calibracao}
-m^{*}(\varepsilon) = \arg\min_{m} \; C_{\mathrm{val}}(m)
-\quad \text{sujeito a} \quad
-V_{\mathrm{val}}(m) \leq \varepsilon,
-\end{equation}
+Os parâmetros das políticas, a margem $m$ na preditiva e a utilização-alvo $u^{*}$ na reativa, são escolhidos na validação e avaliados no teste. Para cada limite de violações $\varepsilon$, escolhe-se, na grade da Tabela~\ref{tab:parametros}, o valor mais barato entre os que respeitam o limite na validação; o resultado desse valor no teste é o \textbf{ponto de operação} da política. Como o teste não participa da escolha, o ponto de operação pode ultrapassar $\varepsilon$ no teste. O dimensionamento estático e o oráculo não têm parâmetro.
 
-\noindent em que $C_{\mathrm{val}}$ e $V_{\mathrm{val}}$ são o custo e a fração de intervalos com violação na validação. O \textbf{ponto de operação} de um previsor para o limite $\varepsilon$ é a política preditiva com a margem $m^{*}(\varepsilon)$, medida no teste. Na política reativa, a escolha é a mesma, com a utilização-alvo $u^{*}$ no lugar de $m$; o dimensionamento estático e o oráculo são usados sem margem. Se nenhum valor da grade cumpre o limite na validação, a política não tem ponto de operação para aquele $\varepsilon$. Essa é a versão operacional da Equação~\ref{eq:problema}: como a restrição é verificada na validação, o teste nunca participa da escolha, e o ponto de operação pode ultrapassar $\varepsilon$ no teste.
+A Tabela~\ref{tab:parametros} reúne os valores usados no protótipo, mantidos no Projeto Final II salvo na sensibilidade a $L$, nas várias janelas de teste e no rastro do Google (\ref{oe:sensibilidade} a \ref{oe:replicacao}, Tabela~\ref{tab:objetivos}). Os parâmetros dos previsores, as janelas de teste e as sementes estão na Tabela~\ref{tab:parametros-previsores}, no Apêndice~\ref{ap:parametros}.
 
-\textbf{Simulador e métricas.} Reproduz, intervalo a intervalo, a alocação de instâncias homogêneas, em que a decisão tomada em $\tau$ vale em $\tau + L$, e calcula as métricas da Seção~\ref{subsec:metricas}. É implementado em Python nos Projetos Finais I e II; se o cronograma permitir, um subconjunto dos experimentos será reproduzido no CloudSim Plus \cite{silvafilho2017cloudsimplus} como validação.
-
-A decisão metodológica central é manter a política de alocação \textbf{fixa} e variar apenas o previsor. Assim, qualquer diferença de custo ou de violações entre duas configurações pode ser atribuída à previsão, e não à regra de decisão.
+\begin{table}[htbp]
+\centering
+\caption{Parâmetros da alocação e da avaliação}
+\label{tab:parametros}
+\renewcommand{\arraystretch}{1.4}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.9cm} >{\centering\arraybackslash}p{1.3cm} >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Parâmetro} & \textbf{Símbolo} & \textbf{Valor} \\
+\midrule
+Intervalo de agregação & $\Delta$ & 5 minutos \\
+Divisão treino/validação/teste (PF~I) & -- & 60\% / 20\% / 20\%, cronológica \\
+Horizontes de previsão avaliados & $h$ & 1, 2, 3 e 6 intervalos (5 a 30 min) \\
+Antecedência da decisão & $L$ & 1 intervalo; 2 na análise de sensibilidade \\
+Instâncias no pico do treino & $n_{\mathrm{pico}}$ & 50 (cada instância vale 2\% do pico) \\
+Capacidade de uma instância & $k$ & Pico do treino dividido por $n_{\mathrm{pico}}$ (60,94 máquinas equivalentes) \\
+Custo por instância e intervalo & $c$ & 1 \\
+Número mínimo de instâncias & $n_{\min}$ & 1 \\
+Grade de margens (preditiva) & $m$ & 0 a 0,60, com passo 0,01 \\
+Grade de utilizações-alvo (reativa) & $u^{*}$ & 0,50 a 0,99, com passo 0,01 \\
+Tolerância e estabilização (reativa) & -- & 10\% e 6 intervalos (30 min) \\
+Limites de violação & $\varepsilon$ & 1\% e 5\% \\
+\bottomrule
+\end{tabularx}
+\fonte{Elaborado pelo autor.}
+\end{table}
 
 \section{Métricas de avaliação}
 \label{subsec:metricas}
@@ -89,22 +109,19 @@ A decisão metodológica central é manter a política de alocação \textbf{fix
 
 \noindent em que $C$ é o custo total, $V$ é a fração de intervalos com violação, $U$ é a fração da demanda não atendida, $O$ é a fração da capacidade ociosa e $A$ é o número de alterações em $n_t$, indesejáveis na prática. $U$ mede a magnitude das violações, que $V$ apenas conta, e $O$ mede a capacidade paga e não usada. $C$ e $V$ são, respectivamente, a função objetivo e o lado esquerdo da restrição da Equação~\ref{eq:problema}. O custo é normalizado pelo de um oráculo, que conhece a demanda futura e aloca, em cada intervalo, o menor número de instâncias que a atende, $\lceil d_t / k \rceil$. Como nenhuma alocação mais barata atende toda a demanda, $C_{\text{oráculo}}$ é o piso do custo sem violações; uma política que viola pode custar menos que o oráculo, e por isso $C_{\mathrm{norm}}$ deve ser lido sempre junto com $V$.
 
-\section{Objetivos}
+\section{Objetivos e escopo}
 \label{sec:objetivos}
-
-\subsection{Objetivo geral}
 \label{subsec:objetivo-geral}
-
-Avaliar, em um ambiente de simulação alimentado por rastros públicos, a redução de custo obtida pela alocação guiada por uma rede neural recorrente, em comparação com métodos tradicionais sob a mesma política e com uma política reativa, para limites fixos de violação de SLA.
-
-\subsection{Questões de pesquisa}
 \label{subsec:questoes}
+\label{subsec:objetivos-especificos}
+
+O objetivo geral é avaliar, em um ambiente de simulação alimentado por rastros públicos, a redução de custo obtida pela alocação guiada por uma rede neural recorrente, em comparação com métodos tradicionais sob a mesma política e com uma política reativa, para limites fixos de violação de SLA.
 
 O objetivo geral se desdobra nas cinco questões de pesquisa (QP) da Tabela~\ref{tab:questoes}.
 
 \begin{table}[htbp]
 \centering
-\caption{Questões de pesquisa.}
+\caption{Questões de pesquisa}
 \label{tab:questoes}
 \renewcommand{\arraystretch}{1.5}
 \footnotesize
@@ -119,16 +136,14 @@ O objetivo geral se desdobra nas cinco questões de pesquisa (QP) da Tabela~\ref
 \textbf{QP5} & Incluir a memória como entrada da GRU reduz o custo de alocação em relação à GRU univariada, para o mesmo $\varepsilon$? \\
 \bottomrule
 \end{tabularx}
+\fonte{Elaborado pelo autor.}
 \end{table}
 
-\subsection{Objetivos específicos}
-\label{subsec:objetivos-especificos}
-
-A Tabela~\ref{tab:objetivos} lista os objetivos específicos (OE), as questões de pesquisa a que respondem e a situação de cada um ao fim do Projeto Final I.
+A Tabela~\ref{tab:objetivos} lista os objetivos específicos (OE), as questões de pesquisa a que respondem e a situação de cada um ao fim do Projeto Final I. Com as várias janelas e sementes de \ref{oe:robustez}, um previsor só será considerado melhor que outro se o intervalo de 95\% da diferença pareada de $C_{\mathrm{norm}}$, obtido por \textit{bootstrap} \cite{efron1993introduction}, excluir zero, com correção de Holm \cite{holm1979simple}; o erro de previsão será comparado pelo teste de Diebold-Mariano \cite{diebold1995comparing}.
 
 \begin{table}[htbp]
 \centering
-\caption{Objetivos específicos, questões de pesquisa associadas e situação ao fim do Projeto Final I.}
+\caption{Objetivos específicos e situação no Projeto Final I}
 \label{tab:objetivos}
 \footnotesize
 \renewcommand{\arraystretch}{1.5}
@@ -149,57 +164,10 @@ A Tabela~\ref{tab:objetivos} lista os objetivos específicos (OE), as questões 
 \oelabel{OE10}{oe:reprodutibilidade} & \textbf{Reprodutibilidade:} repositório público que regenera tabelas e figuras com um comando & -- & Implementado; a ser mantido \\
 \bottomrule
 \end{tabularx}
+\fonte{Elaborado pelo autor.}
 \end{table}
 
-Os resultados preliminares do Projeto Final I usam uma janela de teste e uma semente da GRU. No Projeto Final II, cada rastro é avaliado em janelas de teste com treino expansivo e validação do mesmo tamanho do teste: três janelas de um dia (288 intervalos) na Alibaba, com teste nos dias 5, 6 e 7 e treino de 0 a 3, 0 a 4 e 0 a 5, e de três a quatro janelas de dois a três dias por célula no Google, com pelo menos 14 dias de treino. A GRU é treinada com dez sementes (42 a 51), cada uma com o ponto de operação escolhido na validação e medido no teste, e entra na comparação pela média entre sementes; os demais previsores rodam uma vez por janela.
-
-O melhor previsor em $\varepsilon$ é o de menor $C_{\mathrm{norm}}$ médio entre os que têm $V$ médio de no máximo $\varepsilon$. Afirmar que um previsor é melhor que outro exige que o intervalo de 95\% da diferença pareada de $C_{\mathrm{norm}}$, obtido por \textit{bootstrap} \cite{efron1993introduction}, exclua zero, com correção de Holm \cite{holm1979simple} nas comparações pré-especificadas; na Alibaba, com três janelas, a conclusão é apenas descritiva. O erro de previsão é comparado à parte, pelo teste de Diebold-Mariano \cite{diebold1995comparing}.
-
-\section{Escopo do sistema}
-\label{sec:escopo-sistema}
-\label{sec:escopo}
-
-O sistema é um \textbf{ambiente de simulação e avaliação}, e não um autoescalador para produção: recebe um rastro e um arquivo de configuração e produz as métricas de previsão e de alocação.
-
-\textbf{Incluído.} Rastros públicos da Alibaba \cite{alibaba2018trace} e do Google \cite{wilkes2020google}, agregados em séries de uso de processador e de memória; horizontes de previsão curtos, na escala de minutos; alocação em um ambiente de simulação, com custo por instância ativa e violação de SLA nos intervalos em que a demanda excede a capacidade; e comparação entre uma rede neural e métodos tradicionais de previsão sob a mesma política de alocação, ao lado das políticas de referência da Seção~\ref{sec:solucao}.
-
-\textbf{Fora do escopo.} Implantação em uma nuvem real, posicionamento e migração de máquinas virtuais entre servidores físicos, consumo de energia, múltiplos provedores e aprendizado por reforço para a decisão. Na simulação, o posicionamento segue a política padrão do simulador, a mesma para todos os previsores.
-
-A Tabela~\ref{tab:parametros} resume os parâmetros da alocação e da avaliação, e a Tabela~\ref{tab:parametros-previsores}, no Apêndice~\ref{ap:parametros}, os dos previsores e as janelas e sementes do Projeto Final II. Os parâmetros do protótipo são mantidos no Projeto Final II, salvo os ajustes de \ref{oe:sensibilidade} a \ref{oe:replicacao} e as janelas e sementes da Seção~\ref{subsec:objetivos-especificos}.
-
-\begin{table}[htbp]
-\centering
-\caption{Parâmetros da alocação e do protocolo de avaliação.}
-\label{tab:parametros}
-\renewcommand{\arraystretch}{1.4}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.9cm} >{\centering\arraybackslash}p{1.3cm} >{\raggedright\arraybackslash}X}
-\toprule
-\textbf{Parâmetro} & \textbf{Símbolo} & \textbf{Valor} \\
-\midrule
-Intervalo de agregação & $\Delta$ & 5 minutos \\
-Divisão treino/validação/teste (PF~I) & -- & 60\% / 20\% / 20\%, cronológica \\
-Horizontes de previsão avaliados & $h$ & 1, 2, 3 e 6 intervalos (5 a 30 min) \\
-Antecedência da decisão & $L$ & 1 intervalo; 2 na análise de sensibilidade \\
-Instâncias no pico do treino & $n_{\mathrm{pico}}$ & 50 \\
-Capacidade de uma instância & $k$ & Pico do treino dividido por $n_{\mathrm{pico}}$ (60,94 máquinas equivalentes) \\
-Custo por instância e intervalo & $c$ & 1 \\
-Número mínimo de instâncias & $n_{\min}$ & 1 \\
-Grade de margens (preditiva) & $m$ & 0 a 0,60, com passo 0,01 \\
-Grade de utilizações-alvo (reativa) & $u^{*}$ & 0,50 a 0,99, com passo 0,01 \\
-Tolerância e estabilização (reativa) & -- & 10\% e 6 intervalos \\
-Limites de violação & $\varepsilon$ & 1\% e 5\% \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-Valem as simplificações do Capítulo~\ref{cap:situacao-atual}: demanda agregada, instâncias homogêneas e violação sempre que a demanda de um intervalo excede a capacidade. No protótipo, a alocação considera apenas o processador, e a GRU é univariada. No Projeto Final II, a memória entra de duas formas: como segundo recurso na alocação, com o número de instâncias dado pelo maior entre os necessários para processador e para memória, e como entrada adicional da GRU, nos moldes do esDNN \cite{xu2022esdnn}.
-
-\section{Usuários e situações apoiadas}
-\label{sec:usuarios}
-
-O ambiente se destina a pesquisadores e a engenheiros de planejamento de capacidade, para comparar previsores sob um mesmo limite de violações, estimar o custo de um nível de serviço e estender a avaliação a novos previsores, políticas ou rastros.
+Ficam fora do escopo a implantação em uma nuvem real, o posicionamento e a migração de máquinas virtuais, o consumo de energia, os múltiplos provedores e o aprendizado por reforço para a decisão. O simulador trata a capacidade de forma agregada, sem posicionamento de máquinas virtuais, e, no protótipo do Projeto Final I, a alocação considera só o processador, com a GRU univariada.
 
 \section{Avanços em relação às soluções existentes}
 \label{sec:avancos}
