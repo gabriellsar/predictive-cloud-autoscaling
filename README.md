@@ -173,6 +173,8 @@ parâmetros de `configs/v0.toml` e semente fixa (`seed = 42`). As dependências 
 
 ## Como citar
 
+O GitHub lê o [`CITATION.cff`](CITATION.cff) e oferece "Cite this repository" na página do repositório. Em BibTeX:
+
 ```bibtex
 @thesis{rosas2026alocacao,
   author = {Rosas, Gabriel Lobo de Sant Anna},

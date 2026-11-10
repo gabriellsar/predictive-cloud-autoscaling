@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: "Se você usar este software ou os resultados deste trabalho, cite-o como abaixo."
+type: software
+title: "Alocação preditiva de recursos em nuvem via previsão de carga com Redes Neurais para minimização de custos operacionais"
+abstract: >-
+  Avalia o quanto a qualidade da previsão de carga de trabalho (rede neural GRU
+  contra métodos tradicionais como ARIMA e Holt-Winters) reduz o custo de
+  alocação de recursos em nuvem sem aumentar as violações de SLA, em um data
+  center simulado alimentado pelo rastro público do cluster da Alibaba. A
+  política de alocação é fixa e só o previsor muda.
+authors:
+  - family-names: Rosas
+    given-names: Gabriel Lobo de Sant Anna
+    affiliation: "Pontifícia Universidade Católica do Rio de Janeiro (PUC-Rio)"
+repository-code: "https://github.com/gabriellsar/predictive-cloud-autoscaling"
+license: MIT
+version: "0.1.0"
+date-released: "2026-11-10"
+keywords:
+  - autoscaling
+  - cloud computing
+  - resource allocation
+  - workload forecasting
+  - time series forecasting
+  - deep learning
+  - GRU
+  - ARIMA
+  - Holt-Winters
+  - simulation
+  - SLA
+preferred-citation:
+  type: thesis
+  thesis-type: "Trabalho de conclusão de curso (Engenharia de Computação)"
+  title: "Alocação preditiva de recursos em nuvem via previsão de carga com Redes Neurais para minimização de custos operacionais"
+  authors:
+    - family-names: Rosas
+      given-names: Gabriel Lobo de Sant Anna
+  institution:
+    name: "Pontifícia Universidade Católica do Rio de Janeiro"
+    city: "Rio de Janeiro"
+    country: BR
+  year: 2026
