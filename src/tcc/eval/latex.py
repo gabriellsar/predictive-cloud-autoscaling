@@ -40,7 +40,7 @@ def forecast_by_horizon_table(metrics: pd.DataFrame, split: str) -> str:
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        rf"\caption{{Erro das previsões {SPLITS[split]}, por horizonte $h$.}}",
+        rf"\caption{{Erro das previsões {SPLITS[split]}, por horizonte}}",
         rf"\label{{tab:erro-horizonte-{split}}}",
         r"\footnotesize",
         r"\begin{tabular}{lcrrrrr}",
@@ -69,6 +69,7 @@ def forecast_by_horizon_table(metrics: pd.DataFrame, split: str) -> str:
         r"\bottomrule",
         r"\end{tabular}",
         "",
+        r"\fonte{Elaborado pelo autor.}",
         r"\smallskip",
         r"\parbox{\textwidth}{\footnotesize Nota: RMSE, MAE e viés em máquinas equivalentes; "
         r"viés positivo indica superestimação. "
