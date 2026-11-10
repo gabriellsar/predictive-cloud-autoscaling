@@ -1,7 +1,31 @@
 [project]
 name = "tcc"
 version = "0.1.0"
-description = "Alocação preditiva de recursos em nuvem via previsão de carga (Projeto Final)"
+description = "Predictive cloud autoscaling: neural-network workload forecasting vs. classical methods to cut operating cost under SLA constraints."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Gabriel Lobo de Sant Anna Rosas", email = "gabrielsrosas@gmail.com" }]
+keywords = [
+    "autoscaling",
+    "cloud-computing",
+    "resource-allocation",
+    "workload-forecasting",
+    "time-series-forecasting",
+    "deep-learning",
+    "gru",
+    "arima",
+    "holt-winters",
+    "simulation",
+    "sla",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Distributed Computing",
+]
 requires-python = ">=3.12"
 dependencies = [
     "numpy",
@@ -12,6 +36,11 @@ dependencies = [
     "statsmodels",
     "matplotlib",
 ]
+
+[project.urls]
+Homepage = "https://github.com/gabriellsar/predictive-cloud-autoscaling"
+Repository = "https://github.com/gabriellsar/predictive-cloud-autoscaling"
+Issues = "https://github.com/gabriellsar/predictive-cloud-autoscaling/issues"
 
 [dependency-groups]
 dev = ["pytest", "ruff", "ipykernel"]
